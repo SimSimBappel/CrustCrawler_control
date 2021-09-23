@@ -27,7 +27,7 @@ void setup() {
   // Get DYNAMIXEL information
   dxl.ping(DXL_ID);
   delay(5000);
-  home();
+  //home();
 }
 
 void loop() {
@@ -35,18 +35,7 @@ void loop() {
   
   // Position Control Mode in protocol2.0, Joint Mode in protocol1.0
   // Turn off torque when configuring items in EEPROM area
-
-
-}
-
-void home(){
-
-
-
-
-
-
-  /*----------------------------------------HOME BUT EXTRA SCUFFED
+/*
   Serial1.println("HOME");
   int homePos[] = {2726,2020,933,2172,2112};
   for(int i=2;i<6;i++){
@@ -71,3 +60,28 @@ void home(){
       Serial1.println(dxl.getPresentPosition(DXL_ID)); Serial1.println();
     }*/
 }
+
+void home(){
+static uint32_t pre_time_write, pre_time_read;
+bool home = false;
+int homePos[] = {2726,2020,933,2172,2112};
+int DXL_ID = 2;
+
+Serial1.println(dxl.getPresentPosition(DXL_ID));
+int currentPos = dxl.getPresentPosition(DXL_ID);
+int value = currentPos-homePos[DXL_ID-1];///eeeeh fix
+
+
+  while(!home){
+    if(millis() - pre_time_write >= 100) {    
+    pre_time_write = millis();
+    dxl.setGoalPosition(DXL_ID, value);
+    value += 5;
+    }     
+    if(millis() - pre_time_read >= 50) {
+      pre_time_read = millis();
+      Serial1.print("Present Position : ");
+      Serial1.println(dxl.getPresentPosition(DXL_ID));
+    }
+  }
+  
