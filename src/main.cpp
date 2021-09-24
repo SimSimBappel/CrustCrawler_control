@@ -65,7 +65,7 @@ void loop() {
 
 void home(){
 
-
+//hej
   DXL_ID = 3;
 
   dxl.torqueOff(DXL_ID);
