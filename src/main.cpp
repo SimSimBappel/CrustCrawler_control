@@ -86,4 +86,4 @@ int value = currentPos-homePos[DXL_ID-1];///eeeeh fix
       Serial1.println(dxl.getPresentPosition(DXL_ID));
     }
   }
-  
+}
