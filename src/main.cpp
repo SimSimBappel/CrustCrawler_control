@@ -66,16 +66,18 @@ void loop() {
 void home(){
 
 
-  DXL_ID = 2;
+  DXL_ID = 3;
+
+  dxl.torqueOff(DXL_ID);
+  dxl.setOperatingMode(DXL_ID, OP_CURRENT);
+  dxl.torqueOn(DXL_ID);
 
   while(1){
-    dxl.torqueOff(DXL_ID);
-    dxl.setOperatingMode(DXL_ID, OP_CURRENT);
-    dxl.torqueOn(DXL_ID);
-    if(dxl.setGoalCurrent(DXL_ID, 50)){
-      delay(100);
-      Serial1.print("Present Current : ");
-      Serial1.println(dxl.getPresentCurrent(DXL_ID)); Serial1.println();
+    Serial1.println("running");
+    if(dxl.setGoalCurrent(DXL_ID, 512)){
+    delay(300);
+    Serial1.print("Present Current : ");
+    Serial1.println(dxl.getPresentCurrent(DXL_ID)); Serial1.println();
     }
   }
 }
