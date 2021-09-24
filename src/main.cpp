@@ -66,15 +66,16 @@ void loop() {
 void home(){
 
 //hej
+  //bool homed = false;
   DXL_ID = 3;
   int deviation = 60;
   dxl.torqueOff(DXL_ID);
   dxl.setOperatingMode(DXL_ID, OP_CURRENT);
   dxl.torqueOn(DXL_ID);
 
-  while(1){
+  for(int i = 0; i<100;i++){
       
-    delay(30);
+    delay(10);
     Serial1.print("Present Current : ");
     Serial1.print(dxl.getPresentCurrent(DXL_ID)); //Serial1.println();
     Serial1.print("  Present POS : ");
@@ -87,6 +88,31 @@ void home(){
     else if(int(dxl.getPresentPosition(DXL_ID)) > 2030+deviation){
       Serial1.print("venstre");
       dxl.setGoalCurrent(DXL_ID, -50);
+    }
+    else{
+      dxl.setGoalCurrent(DXL_ID, 0);
+
+    }
+  }
+  DXL_ID = 2;
+  
+  dxl.torqueOff(DXL_ID);
+  dxl.setOperatingMode(DXL_ID, OP_CURRENT);
+  dxl.torqueOn(DXL_ID);
+  for(int i = 0; i < 200; i++){
+  delay(10);
+    Serial1.print("Present Current : ");
+    Serial1.print(dxl.getPresentCurrent(DXL_ID)); //Serial1.println();
+    Serial1.print("  Present POS : ");
+    Serial1.println(int(dxl.getPresentPosition(DXL_ID))); //Serial1.println();
+
+    if(int(dxl.getPresentPosition(DXL_ID)) < 2020-deviation){
+      Serial1.print("højre");
+      dxl.setGoalCurrent(DXL_ID, 400);
+    }
+    else if(int(dxl.getPresentPosition(DXL_ID)) > 2020+deviation){
+      Serial1.print("venstre");
+      dxl.setGoalCurrent(DXL_ID, -400);
     }
     else{
       dxl.setGoalCurrent(DXL_ID, 0);
