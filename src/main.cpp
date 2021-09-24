@@ -67,16 +67,29 @@ void home(){
 
 //hej
   DXL_ID = 3;
-
+  int deviation = 60;
   dxl.torqueOff(DXL_ID);
   dxl.setOperatingMode(DXL_ID, OP_CURRENT);
   dxl.torqueOn(DXL_ID);
 
   while(1){
-  dxl.setGoalCurrent(DXL_ID, 100);
-  delay(20);
-  Serial1.print("Present Current : ");
-  Serial1.println(dxl.getPresentCurrent(DXL_ID)); Serial1.println();
-    
+      
+    delay(30);
+    Serial1.print("Present Current : ");
+    Serial1.print(dxl.getPresentCurrent(DXL_ID)); //Serial1.println();
+    Serial1.print("  Present POS : ");
+    Serial1.println(int(dxl.getPresentPosition(DXL_ID))); //Serial1.println();
+
+    if(int(dxl.getPresentPosition(DXL_ID)) < 2030-deviation){
+      Serial1.print("højre");
+      dxl.setGoalCurrent(DXL_ID, 50);
+    }
+    else if(int(dxl.getPresentPosition(DXL_ID)) > 2030+deviation){
+      Serial1.print("venstre");
+      dxl.setGoalCurrent(DXL_ID, -50);
+    }
+    else{
+      dxl.setGoalCurrent(DXL_ID, 0);
+    }
   }
 }
