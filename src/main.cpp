@@ -27,7 +27,7 @@ void setup() {
   // Get DYNAMIXEL information
   dxl.ping(DXL_ID);
   delay(5000);
-  //home();
+  home();
 }
 
 //gay
@@ -64,26 +64,18 @@ void loop() {
 }
 
 void home(){
-static uint32_t pre_time_write, pre_time_read;
-bool home = false;
-int homePos[] = {2726,2020,933,2172,2112};
-int DXL_ID = 2;
-
-Serial1.println(dxl.getPresentPosition(DXL_ID));
-int currentPos = dxl.getPresentPosition(DXL_ID);
-int value = currentPos-homePos[DXL_ID-1];///eeeeh fix
 
 
-  while(!home){
-    if(millis() - pre_time_write >= 100) {    
-    pre_time_write = millis();
-    dxl.setGoalPosition(DXL_ID, value);
-    value += 5;
-    }     
-    if(millis() - pre_time_read >= 50) {
-      pre_time_read = millis();
-      Serial1.print("Present Position : ");
-      Serial1.println(dxl.getPresentPosition(DXL_ID));
+  DXL_ID = 2;
+
+  while(1){
+    dxl.torqueOff(DXL_ID);
+    dxl.setOperatingMode(DXL_ID, OP_CURRENT);
+    dxl.torqueOn(DXL_ID);
+    if(dxl.setGoalCurrent(DXL_ID, 50)){
+      delay(100);
+      Serial1.print("Present Current : ");
+      Serial1.println(dxl.getPresentCurrent(DXL_ID)); Serial1.println();
     }
   }
 }
