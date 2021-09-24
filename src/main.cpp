@@ -73,11 +73,10 @@ void home(){
   dxl.torqueOn(DXL_ID);
 
   while(1){
-    Serial1.println("running");
-    if(dxl.setGoalCurrent(DXL_ID, 512)){
-    delay(300);
-    Serial1.print("Present Current : ");
-    Serial1.println(dxl.getPresentCurrent(DXL_ID)); Serial1.println();
-    }
+  dxl.setGoalCurrent(DXL_ID, 100);
+  delay(20);
+  Serial1.print("Present Current : ");
+  Serial1.println(dxl.getPresentCurrent(DXL_ID)); Serial1.println();
+    
   }
 }
