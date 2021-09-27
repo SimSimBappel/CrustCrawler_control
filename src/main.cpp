@@ -11,18 +11,14 @@ DynamixelShield dxl;
 //This namespace is required to use Control table item names
 using namespace ControlTableItem;
 
+// NB only one task must use print if you dont protect the serial port by a critical section???
 
-
-// A small krnl program with two independent tasks
-// They run at same priority so krnl will do timeslicing between them
-// Watch LED and Serial TX 
-
-// NB only one task must use print if you dont protect the serial port by a critical section
-
-struct k_t *pt1, *pt2, *pt3;          // to taskdescriptor for t1 and t2  
+struct k_t *pt1, *pt2, *pt3;          
  
-char s1[3000]; // stak for task t1
-char s2[3000]; // stak for task t2
+
+//find proper stacksize, see void setup comments
+char s1[3000]; 
+char s2[3000]; 
 char s3[3000];
  
 void t1(void)
@@ -34,19 +30,17 @@ void t1(void)
   dxl.torqueOn(DXL_ID);
   
   while(1){
-    //Serial1.println(DXL_ID);
     
+    //make a Serial handler
     Serial1.print("M3 Current : ");
-    Serial1.print(dxl.getPresentCurrent(DXL_ID)); //Serial1.println();
+    Serial1.print(dxl.getPresentCurrent(DXL_ID)); 
     Serial1.print("  Present POS : ");
-    Serial1.println(dxl.getPresentPosition(DXL_ID)); //Serial1.println();
+    Serial1.println(dxl.getPresentPosition(DXL_ID)); 
 
     if(int(dxl.getPresentPosition(DXL_ID)) < 2030-deviation){
-      //Serial1.print("højre");
       dxl.setGoalCurrent(DXL_ID, 70);
     }
     else if(int(dxl.getPresentPosition(DXL_ID)) > 2030+deviation){
-      //Serial1.print("venstre");
       dxl.setGoalCurrent(DXL_ID, -70);
     }
     else{
@@ -55,12 +49,10 @@ void t1(void)
     }
     k_sleep(20);
   }
-  // a task must have an endless loop
-  // if you end and leave the task function - a crash will occur!!
-  // so this loop is the code body for task 1
+  
 
-            // lenght of ticks in millisec is specified in
-}                 // k_start call called from setup
+          
+}           
 
 void t2(void)
 {
@@ -70,19 +62,17 @@ void t2(void)
   dxl.setOperatingMode(DXL_ID, OP_CURRENT);
   dxl.torqueOn(DXL_ID);
   while(1){
-    //Serial1.println(DXL_ID);
-    
     Serial1.print("M2 Current : ");
-    Serial1.print(dxl.getPresentCurrent(DXL_ID)); //Serial1.println();
+    Serial1.print(dxl.getPresentCurrent(DXL_ID)); 
     Serial1.print("  Present POS : ");
-    Serial1.println(int(dxl.getPresentPosition(DXL_ID))); //Serial1.println();
+    Serial1.println(int(dxl.getPresentPosition(DXL_ID))); 
 
     if(int(dxl.getPresentPosition(DXL_ID)) < 2020-deviation){
-      //Serial1.print("højre");
+      
       dxl.setGoalCurrent(DXL_ID, 400);
     }
     else if(int(dxl.getPresentPosition(DXL_ID)) > 2020+deviation){
-      //Serial1.print("venstre");
+     
       dxl.setGoalCurrent(DXL_ID, -400);
     }
     else{
@@ -94,55 +84,102 @@ void t2(void)
 }
 
 void t3(void){
-  
+  byte DXL_ID = 4; //test to see if byte works 
+  dxl.torqueOff(DXL_ID);
+  dxl.setOperatingMode(DXL_ID, OP_POSITION); //current mode is not supported by the end-effectors motors IDs 4 and 5
+  dxl.torqueOn(DXL_ID);
+
+  while(1){
+    const byte numChars = 32;
+    char receivedChars[numChars];
+    boolean newData = false;
+
+    static boolean recvInProgress = false;
+    static byte ndx = 0;
+    char startMarker = '<';
+    char endMarker = '>';
+    char rc;
+ 
+    while (Serial.available() > 0 && newData == false) {
+        rc = Serial.read();
+
+        if (recvInProgress == true) {
+            if (rc != endMarker) {
+                receivedChars[ndx] = rc;
+                ndx++;
+                if (ndx >= numChars) {
+                    ndx = numChars - 1;
+                }
+            }
+            else {
+                receivedChars[ndx] = '\0'; // terminate the string
+                recvInProgress = false;
+                ndx = 0;
+                newData = true;
+            }
+        }
+
+        else if (rc == startMarker) {
+            recvInProgress = true;
+        }
+    }
+
+
+    if (newData) {
+        Serial.print("This just in ... ");
+        Serial.println(receivedChars);
+        newData = false;
+    }
+    /*
+    if(Serial1.available() > 0){
+      while(Serial1.available() > 0){
+        msg += char(Serial1.read());
+        k_sleep(10);
+      }
+      Serial1.print("heard: ");
+      Serial1.print(msg);
+      
+      if(msg == "4")
+    }
+    k_sleep(50);*/
+  }
 }
 
 
 
-void setup()
-{
-
-    // put your setup code here, to run once:
-  
-  // For Uno, Nano, Mini, and Mega, use UART port of DYNAMIXEL Shield to debug.
-  Serial1.begin(9600);
-  
-  // Set Port baudrate to 57600bps. This has to match with DYNAMIXEL baudrate.
+void setup(){
+  //Serial definition--
+  //Native serial port (switches from USB-port to dynamixel with physical switch)
   dxl.begin(57600);
-  
-  // Set Port Protocol Version. This has to match with DYNAMIXEL protocol version.
+  //second serial (the one that communicates with UNO)
+  Serial1.begin(9600);
+  //--
+
   dxl.setPortProtocolVersion(DXL_PROTOCOL_VERSION);
-  // Get DYNAMIXEL information
+
+  //if (manifacturing) info is needed from a specific motor use below
   //dxl.ping(DXL_ID);
   
 
-  // init krnl so you can create 2 tasks, no semaphores and no message queues
+  // init krnl so you can create x tasks, y semaphores and z message queues
   k_init(3,0,0); 
 
-// two task are created
-//               |------------ function used for body code for task
-//               |  |--------- priority (lower number= higher prio
-//               |  |   |--- staksize for array s1
-
+  //each pt(n) is a pointer to a function t(n), priority, stack size 
   pt1=k_crt_task(t1,10,3000); 
   pt2=k_crt_task(t2,11,3000);
   pt3=k_crt_task(t2,12, 1000);
-  
-  
-  // NB-1 remember an Arduino has only 2-8 kByte RAM
-  // NB-2 remember that stak is used in function calls for
-  //  - return address
-  //  - registers stakked
-  //  - local variabels in a function
-  //  So having 200 Bytes of stak excludes a local variable like ...
-  //    int arr[400];  
-  // krnl call k_unused_stak returns size of unused stak
-  // Both task has same priority so krnl will shift between the
-  // tasks every 10 milli second (speed set in k_start)
 
+  //stack size----
+  //Arudino Mega has 8 kByte RAM
+  //stack is used in funcion calls for:
+  // return address, registers stakked, local variables in a function
+  //
+  //!!! to find the unused stacksize call "k_unused_stack" !!!
   
-    
-  k_start(1); // start kernel with tick speed 1 milli seconds
+  // start kernel with tick speed 1 milli seconds
+  k_start(1); 
 }
 
-void loop(){ /* loop will never be called */ }
+void loop(){ 
+  Serial1.print("Im not supposed to be here.");
+ }
