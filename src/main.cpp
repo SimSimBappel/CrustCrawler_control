@@ -49,7 +49,7 @@ void t1(void)
     }
     k_sleep(20);
   }
-  
+  //hej
 
           
 }           
