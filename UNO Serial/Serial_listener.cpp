@@ -1,3 +1,4 @@
+#include <Arduino.h>
 /*
   Software serial multple serial test
 
