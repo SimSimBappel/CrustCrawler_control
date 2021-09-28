@@ -47,7 +47,7 @@ void t1(void)
       dxl.setGoalCurrent(DXL_ID, 0);
 
     }
-    k_sleep(20);
+    k_sleep(50);
   }
   //hej
 
@@ -78,7 +78,7 @@ void t2(void)
     else{
       dxl.setGoalCurrent(DXL_ID, 0);
     }
-    k_sleep(20);
+    k_sleep(50);
   }
   
 }
@@ -89,46 +89,48 @@ void t3(void){
   dxl.setOperatingMode(DXL_ID, OP_POSITION); //current mode is not supported by the end-effectors motors IDs 4 and 5
   dxl.torqueOn(DXL_ID);
 
+  const byte numChars = 50;
+  char receivedChars[numChars];
+  boolean newData = false;
+
+  static boolean recvInProgress = false;
+  static byte ndx = 0;
+  char startMarker = '<';
+  char endMarker = '>';
+  char rc;
+
   while(1){
-    const byte numChars = 32;
-    char receivedChars[numChars];
-    boolean newData = false;
-
-    static boolean recvInProgress = false;
-    static byte ndx = 0;
-    char startMarker = '<';
-    char endMarker = '>';
-    char rc;
+    Serial1.print("t3");
  
-    while (Serial.available() > 0 && newData == false) {
-        rc = Serial.read();
+    while (Serial1.available() > 0 && newData == false) {
+      rc = Serial1.read();
 
-        if (recvInProgress == true) {
-            if (rc != endMarker) {
-                receivedChars[ndx] = rc;
-                ndx++;
-                if (ndx >= numChars) {
-                    ndx = numChars - 1;
-                }
-            }
-            else {
-                receivedChars[ndx] = '\0'; // terminate the string
-                recvInProgress = false;
-                ndx = 0;
-                newData = true;
-            }
+      if (recvInProgress == true) {
+        if (rc != endMarker) {
+          receivedChars[ndx] = rc;
+          ndx++;
+          if (ndx >= numChars) {
+            ndx = numChars - 1;
+          }
         }
+        else {
+            receivedChars[ndx] = '\0'; // terminate the string
+            recvInProgress = false;
+            ndx = 0;
+            newData = true;
+        }
+      }
 
-        else if (rc == startMarker) {
-            recvInProgress = true;
-        }
+      else if (rc == startMarker) {
+        recvInProgress = true;
+      }
     }
 
 
     if (newData) {
-        Serial.print("This just in ... ");
-        Serial.println(receivedChars);
-        newData = false;
+      Serial1.print("This just in ... ");
+      Serial1.println(receivedChars);
+      newData = false;
     }
     /*
     if(Serial1.available() > 0){
@@ -140,8 +142,8 @@ void t3(void){
       Serial1.print(msg);
       
       if(msg == "4")
-    }
-    k_sleep(50);*/
+    }*/
+    k_sleep(50);
   }
 }
 
@@ -165,9 +167,9 @@ void setup(){
   k_init(3,0,0); 
 
   //each pt(n) is a pointer to a function t(n), priority, stack size 
-  pt1=k_crt_task(t1,10,3000); 
-  pt2=k_crt_task(t2,11,3000);
-  pt3=k_crt_task(t2,12, 1000);
+  pt1=k_crt_task(t1, 10, 1000); 
+  pt2=k_crt_task(t2, 11, 1000);
+  pt3=k_crt_task(t2, 12, 3000);
 
   //stack size----
   //Arudino Mega has 8 kByte RAM
@@ -181,5 +183,5 @@ void setup(){
 }
 
 void loop(){ 
-  Serial1.print("Im not supposed to be here.");
+  //Serial1.print("Im not supposed to be here.");
  }
