@@ -1,58 +1,35 @@
 #include <Arduino.h>
-
 #include <krnl.h>
 #include <DynamixelShield.h>
 #include <PID_v1.h>
 
-
 const float DXL_PROTOCOL_VERSION = 2.0;
-
 DynamixelShield dxl;
 
 //This namespace is required to use Control table item names
 using namespace ControlTableItem;
 
-String msg ="";
-
-// NB only one task must use print if you dont protect the serial port by a critical section???
-
 struct k_t *pt1, *pt2, *pt3, *pt4;          
  
-
 //find proper stacksize, see void setup comments
 char s1[500]; 
 char s2[500]; 
 char s3[3000];
 char s4[500];
  
+
+
 void t1(void)
 {
+  //setup
   int DXL_ID = 2;
   dxl.torqueOff(DXL_ID);
   dxl.setOperatingMode(DXL_ID, OP_POSITION);
   dxl.torqueOn(DXL_ID);
   dxl.setGoalPosition(DXL_ID, 1073);
-
+  //loop
   while(1){
-    
-    /*//make a Serial handler
-    Serial1.print("M3 Current : ");
-    Serial1.print(dxl.getPresentCurrent(DXL_ID)); 
-    Serial1.print("  Present POS : ");
-    Serial1.println(int(dxl.getPresentPosition(DXL_ID))); 
-
-    if(int(dxl.getPresentPosition(DXL_ID)) < 2030-deviation){
-      dxl.setGoalCurrent(DXL_ID, 40);
-    }
-    else if(int(dxl.getPresentPosition(DXL_ID)) > 2030+deviation){
-      dxl.setGoalCurrent(DXL_ID, -40);
-    }
-    else{
-      dxl.setGoalCurrent(DXL_ID, 0);
-
-    }*/
-    /*Serial1.print("t1 unused:");
-    Serial1.println(int(k_unused_stak));*/
+    //make a Serial handler
     k_sleep(100);
   }
 }           
@@ -67,8 +44,6 @@ void t2(void)
   dxl.torqueOn(DXL_ID);
   dxl.setGoalPosition(DXL_ID,2755);
   while(1){
-    Serial1.print("t2: ");
-    Serial1.println(msg);
     /*Serial1.print("M2 Current : ");
     Serial1.print(dxl.getPresentCurrent(DXL_ID)); 
     Serial1.print("  Present POS : ");
@@ -153,7 +128,6 @@ void t3(void){
     if (newData) {
       Serial1.print("This just in ... ");
       Serial1.print(receivedChars);
-      msg = String(receivedChars);
       /*inString = String(receivedChars);
       if(receivedChars[1] == '1'){
         Serial1.print("char 1 = 1");
