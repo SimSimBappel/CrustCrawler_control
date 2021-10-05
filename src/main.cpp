@@ -1,4 +1,5 @@
 #include <Arduino.h>
+
 #include <krnl.h>
 #include <DynamixelShield.h>
 #include <PID_v1.h>
@@ -11,11 +12,7 @@ DynamixelShield dxl;
 //This namespace is required to use Control table item names
 using namespace ControlTableItem;
 
-
-
-
-
-
+String msg ="";
 
 // NB only one task must use print if you dont protect the serial port by a critical section???
 
@@ -30,12 +27,12 @@ char s4[500];
  
 void t1(void)
 {
-  //int deviation = 60;
-  int DXL_ID = 3;
+  int DXL_ID = 2;
   dxl.torqueOff(DXL_ID);
-  dxl.setOperatingMode(DXL_ID, OP_CURRENT);
+  dxl.setOperatingMode(DXL_ID, OP_POSITION);
   dxl.torqueOn(DXL_ID);
-  
+  dxl.setGoalPosition(DXL_ID, 1073);
+
   while(1){
     
     /*//make a Serial handler
@@ -54,22 +51,24 @@ void t1(void)
       dxl.setGoalCurrent(DXL_ID, 0);
 
     }*/
-    k_sleep(50);
+    /*Serial1.print("t1 unused:");
+    Serial1.println(int(k_unused_stak));*/
+    k_sleep(100);
   }
-  //hej
-
-          
 }           
 
 void t2(void)
 {
   //int homePos = 1073;
   //int deviation = 60;
-  int DXL_ID = 2;
+  int DXL_ID = 1;
   dxl.torqueOff(DXL_ID);
-  dxl.setOperatingMode(DXL_ID, OP_CURRENT);
+  dxl.setOperatingMode(DXL_ID, OP_POSITION);
   dxl.torqueOn(DXL_ID);
+  dxl.setGoalPosition(DXL_ID,2755);
   while(1){
+    Serial1.print("t2: ");
+    Serial1.println(msg);
     /*Serial1.print("M2 Current : ");
     Serial1.print(dxl.getPresentCurrent(DXL_ID)); 
     Serial1.print("  Present POS : ");
@@ -86,7 +85,10 @@ void t2(void)
     else{
       dxl.setGoalCurrent(DXL_ID, 0);
     }*/
-    k_sleep(50);
+
+    /*Serial1.print("t2 unused:");
+    Serial1.println(int(k_unused_stak));*/
+    k_sleep(100);
   }
   
 }
@@ -95,14 +97,22 @@ void t2(void)
 
 void t3(void){
   
-  byte DXL_ID = 4; //test to see if byte works 
+  byte DXL_ID = 2; //test to see if byte works 
   dxl.torqueOff(DXL_ID);
-  dxl.setOperatingMode(DXL_ID, OP_POSITION); //current mode is not supported by the end-effectors motors IDs 4 and 5
+  dxl.setOperatingMode(DXL_ID, OP_CURRENT); //current mode is not supported by the end-effectors motors IDs 4 and 5
   dxl.torqueOn(DXL_ID);
 
-  const byte numChars = 50;
+  byte DXL_ID2 = 3; //test to see if byte works 
+  dxl.torqueOff(DXL_ID2);
+  dxl.setOperatingMode(DXL_ID2, OP_CURRENT); //current mode is not supported by the end-effectors motors IDs 4 and 5
+  dxl.torqueOn(DXL_ID2);
+
+  const byte numChars = 10;
   char receivedChars[numChars];
+  //String inString = "";
   boolean newData = false;
+  //int msg = 0;
+  //int msg2 = 0;
 
   static boolean recvInProgress = false;
   static byte ndx = 0;
@@ -111,8 +121,11 @@ void t3(void){
   char rc;
 
   while(1){
-    DXL_ID = 1;
-    /*while (Serial1.available() > 0 && newData == false) {
+    //Serial1.println("im running    ");
+
+
+
+    while (Serial1.available() > 0 && newData == false) {
       rc = Serial1.read();
 
       if (recvInProgress == true) {
@@ -139,24 +152,75 @@ void t3(void){
 
     if (newData) {
       Serial1.print("This just in ... ");
-      Serial1.println(receivedChars);
-      newData = false;
-      msg = int(receivedChars);
-    }
-    /*
-    if(Serial1.available() > 0){
-      while(Serial1.available() > 0){
-        msg += char(Serial1.read());
-        k_sleep(10);
-      }
-      Serial1.print("heard: ");
-      Serial1.print(msg);
-      
-      if(msg == "4")
-    }*/
-    //Serial1.println(dxl.getPresentPosition(DXL_ID));
+      Serial1.print(receivedChars);
+      msg = String(receivedChars);
+      /*inString = String(receivedChars);
+      if(receivedChars[1] == '1'){
+        Serial1.print("char 1 = 1");
 
-    //dxl.setGoalPosition(DXL_ID,)
+        msg = Serial1.readStringUntil(',');
+        
+      }*/
+
+      //msg = atoi(receivedChars);
+      newData = false;
+    }
+/*
+    while(Serial1.available() > 0){
+      
+      inString = Serial1.readStringUntil(':');
+      Serial1.print("a: ");
+      Serial1.print(inString);
+      if(inString == "M1"){
+        Serial1.println("string is M1");
+        inString = Serial1.readStringUntil('\n');
+        msg = inString.toInt();
+      }
+      else if(inString == "M2"){
+        Serial1.print("string is M2");
+        inString = Serial1.readStringUntil('\n');
+        msg2 = inString.toInt();
+      }
+    }*/
+
+
+/*
+  //use analog stick
+    msg = analogRead(A8);
+    msg = map(msg,0,1023,-200,200);
+
+    msg2 = analogRead(A9);
+    msg2 = map(msg2,0,1023,70,-70);
+    Serial1.print("msg: ");
+    Serial1.print(msg);
+    Serial1.print("msg2: ");
+    Serial1.print(msg2);
+
+    dxl.setGoalCurrent(DXL_ID, msg);    
+    dxl.setGoalCurrent(DXL_ID2, msg2); 
+*/
+
+
+      
+      
+
+/*
+    if(msg != 0){
+      dxl.torqueOn(2);
+      dxl.setGoalCurrent(2, msg);  
+    }
+    else{
+      dxl.torqueOff(2);
+    }
+
+    if(msg2 != 0){
+      dxl.torqueOn(3);
+      dxl.setGoalCurrent(3, msg2);  
+    }
+    else{
+      dxl.torqueOff(3);
+    }
+    */
 
     k_sleep(100);
   }
@@ -165,6 +229,7 @@ void t3(void){
 void t4(void){
   //PID
   //Define Variables we'll be connecting to
+  /*
   double Setpoint, Input, Output;
 
   //Specify the links and initial tuning parameters
@@ -187,10 +252,10 @@ void t4(void){
 
   //pid
   //Input = dxl.getPresentPosition(DXL_ID);
-  
+  */
   
   while(1){
-    
+    /*
     while(Serial1.available()>0){
       msg=Serial1.read();
     }
@@ -213,7 +278,7 @@ void t4(void){
     //Serial1.print("  Current: ");
     Serial1.println(Output);
     dxl.setGoalCurrent(DXL_ID, Output);
-    /*else if(Input > Setpoint){
+    else if(Input > Setpoint){
       Serial1.print("M1 pos: ");
       Serial1.print(float(dxl.getPresentPosition(DXL_ID)));
       Serial1.print("  Current: ");
