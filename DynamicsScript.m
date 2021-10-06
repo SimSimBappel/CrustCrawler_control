@@ -1,12 +1,17 @@
-syms theta1(t) theta2(t) theta3(t) L1 L2 L3 LC1 LC2 LC3 LCE m1 m2 m3 mEE g h1 h2 h3 hEE;
+syms theta1(t) theta2(t) theta3(t) L1 L2 L3 LC1 LC2 LC3 LCE m1 m2 m3 mEE;
+
+L2 = 16.25;
+L3 = 13.2;
+m2 = 230;
+m3 = 306;
 dtheta1 = diff(theta1, t);
 dtheta2 = diff(theta2, t);
 dtheta3 = diff(theta3, t);
 omega1 = dtheta1*[0;0;1];
-g = [0;0;-9.815];
+g = [9.815;0;0];
 z = [0;0;1];
 v1 = 0;
-s1 = [0;0;0];
+s1 = [0;0;5.65];
 v2 = v1 + cross(omega1, s1);
 R01 = rotz(theta1);
 R12 = [cos(theta2), -sin(theta2), 0; 
@@ -18,8 +23,8 @@ R23= [cos(theta3), 0, -sin(theta3);
       0,           1,           0];
 R02 = R01*R12;
 R03 = R02*R23;
-s2 = [0;0;L1];
-sc2 = s2 + R02*[LC2;0;0];
+s2 = [L2;0;0];
+sc2 = s1 + R02*[LC2;0;0];
 omega2 = omega1 + dtheta2*R02*z;
 vc2 = v2 + cross(omega2, sc2);
 v3 =v2 + cross(omega2, s2);
@@ -41,12 +46,15 @@ I2= [707420.07, -24.23, -1800.90;
       106.15, 632073.01, 4512.75;
       11403.70, 4512.75, 162739.54];
 
+h1 = [0;0;5.65]+[L2+LC3;0;];
+h2 = R01*S1 + R02*Sc2 + [L2-LC2;0;0] + [LC3;0;0]; 
+h3 = R01*S1 + R02*Sc2 + R03*Sc3;
 T1 = 1/2*dot(omega1, I1*omega1);
-V1 = m1*g*h1;
+V1 = m1*dot(g,h1);
 T2 = 1/2*m2*dot(vc2, vc2) + 1/2*dot(omega2,I2*omega2);
-V2 = m2*g*h2;
+V2 = m2*g*dot(g,h2);
 T3 = 1/2*m3*dot(vc3, vc3) + 1/2*dot(omega3, I3*omega3);
-V3 = m3*g*h3;
+V3 = m3*g*dot(g,h3);
 
 L = T1 - V1 + T2 - V2 + T3 - V3;
 
