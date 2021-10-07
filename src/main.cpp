@@ -9,8 +9,21 @@ DynamixelShield dxl;
 //This namespace is required to use Control table item names
 using namespace ControlTableItem;
 
-struct k_t *pt1, *pt2, *pt3, *pt4;          
+struct k_t *pserialHandler, *pt2, *pt3, *pt4;          
  
+
+
+
+struct k_msg_t *msgQ;
+
+char dataBufForMsgQ[100]; 
+
+struct k_t *mutSem;
+
+
+
+
+
 //find proper stacksize, see void setup comments
 char s1[500]; 
 char s2[500]; 
@@ -19,87 +32,22 @@ char s4[500];
  
 
 
-void t1(void)
-{
-  //setup
-  int DXL_ID = 2;
-  dxl.torqueOff(DXL_ID);
-  dxl.setOperatingMode(DXL_ID, OP_POSITION);
-  dxl.torqueOn(DXL_ID);
-  dxl.setGoalPosition(DXL_ID, 1073);
-  //loop
-  while(1){
-    //make a Serial handler
-    k_sleep(100);
-  }
-}           
-
-void t2(void)
-{
-  //int homePos = 1073;
-  //int deviation = 60;
-  int DXL_ID = 1;
-  dxl.torqueOff(DXL_ID);
-  dxl.setOperatingMode(DXL_ID, OP_POSITION);
-  dxl.torqueOn(DXL_ID);
-  dxl.setGoalPosition(DXL_ID,2755);
-  while(1){
-    /*Serial1.print("M2 Current : ");
-    Serial1.print(dxl.getPresentCurrent(DXL_ID)); 
-    Serial1.print("  Present POS : ");
-    Serial1.println(int(dxl.getPresentPosition(DXL_ID))); 
-    
-    if(int(dxl.getPresentPosition(DXL_ID)) < homePos-deviation){
-      
-      dxl.setGoalCurrent(DXL_ID, 200);
-    }
-    else if(int(dxl.getPresentPosition(DXL_ID)) > homePos+deviation){
-     
-      dxl.setGoalCurrent(DXL_ID, -200);
-    }
-    else{
-      dxl.setGoalCurrent(DXL_ID, 0);
-    }*/
-
-    /*Serial1.print("t2 unused:");
-    Serial1.println(int(k_unused_stak));*/
-    k_sleep(100);
-  }
-  
-}
-
-
-
-void t3(void){
-  
-  byte DXL_ID = 2; //test to see if byte works 
-  dxl.torqueOff(DXL_ID);
-  dxl.setOperatingMode(DXL_ID, OP_CURRENT); //current mode is not supported by the end-effectors motors IDs 4 and 5
-  dxl.torqueOn(DXL_ID);
-
-  byte DXL_ID2 = 3; //test to see if byte works 
-  dxl.torqueOff(DXL_ID2);
-  dxl.setOperatingMode(DXL_ID2, OP_CURRENT); //current mode is not supported by the end-effectors motors IDs 4 and 5
-  dxl.torqueOn(DXL_ID2);
-
-  const byte numChars = 10;
+void serialHandler(void)
+{ 
+  //Serial 
+  const byte numChars = 20;
   char receivedChars[numChars];
-  //String inString = "";
   boolean newData = false;
-  //int msg = 0;
-  //int msg2 = 0;
-
   static boolean recvInProgress = false;
   static byte ndx = 0;
   char startMarker = '<';
   char endMarker = '>';
   char rc;
 
+  char res;
+
+  //loop
   while(1){
-    //Serial1.println("im running    ");
-
-
-
     while (Serial1.available() > 0 && newData == false) {
       rc = Serial1.read();
 
@@ -128,36 +76,79 @@ void t3(void){
     if (newData) {
       Serial1.print("This just in ... ");
       Serial1.print(receivedChars);
-      /*inString = String(receivedChars);
-      if(receivedChars[1] == '1'){
-        Serial1.print("char 1 = 1");
-
-        msg = Serial1.readStringUntil(',');
-        
-      }*/
-
-      //msg = atoi(receivedChars);
       newData = false;
+      res = k_send(msgQ, &receivedChars);
     }
-/*
-    while(Serial1.available() > 0){
-      
-      inString = Serial1.readStringUntil(':');
-      Serial1.print("a: ");
-      Serial1.print(inString);
-      if(inString == "M1"){
-        Serial1.println("string is M1");
-        inString = Serial1.readStringUntil('\n');
-        msg = inString.toInt();
-      }
-      else if(inString == "M2"){
-        Serial1.print("string is M2");
-        inString = Serial1.readStringUntil('\n');
-        msg2 = inString.toInt();
-      }
-    }*/
 
 
+    k_wait(mutSem, 0);
+    if (0 <= res) {
+      Serial1.print("1: did deliver "); Serial1.println(receivedChars);
+    }
+    else {
+      Serial1.print("1: no deliver:>>>>>>>>>>>>>>>>>< "); Serial1.println(receivedChars);
+    }
+    k_signal(mutSem);
+    
+    k_sleep(100);
+  }
+}           
+
+void t2(void)
+{
+  //char res;
+  char msg2[20];
+  int lostMessages;
+
+  byte DXL_ID = 2;
+  dxl.torqueOff(DXL_ID);
+  dxl.setOperatingMode(DXL_ID, OP_POSITION);
+  dxl.torqueOn(DXL_ID);
+  dxl.setGoalPosition(DXL_ID, 1073);
+  
+  DXL_ID = 1;
+  dxl.torqueOff(DXL_ID);
+  dxl.setOperatingMode(DXL_ID, OP_POSITION);
+  dxl.torqueOn(DXL_ID);
+  dxl.setGoalPosition(DXL_ID,2755);
+
+
+  DXL_ID =5;
+
+  while(1){
+    k_wait(mutSem, 0);
+
+    k_signal(mutSem);
+
+    k_receive(msgQ, &msg2, 0, &lostMessages);
+
+    k_wait(mutSem, 0);
+    Serial.print("2: received "); Serial.print(msg2);
+    Serial.print(" lost: "); Serial.println(lostMessages);
+    k_signal(mutSem);
+    
+    k_sleep(100);
+  }
+  
+}
+
+
+
+void t3(void){
+
+  byte DXL_ID = 2; //test to see if byte works 
+  dxl.torqueOff(DXL_ID);
+  dxl.setOperatingMode(DXL_ID, OP_CURRENT); //current mode is not supported by the end-effectors motors IDs 4 and 5
+  dxl.torqueOn(DXL_ID);
+
+  byte DXL_ID2 = 3; //test to see if byte works 
+  dxl.torqueOff(DXL_ID2);
+  dxl.setOperatingMode(DXL_ID2, OP_CURRENT); //current mode is not supported by the end-effectors motors IDs 4 and 5
+  dxl.torqueOn(DXL_ID2);
+
+  
+
+  while(1){
 /*
   //use analog stick
     msg = analogRead(A8);
@@ -173,29 +164,6 @@ void t3(void){
     dxl.setGoalCurrent(DXL_ID, msg);    
     dxl.setGoalCurrent(DXL_ID2, msg2); 
 */
-
-
-      
-      
-
-/*
-    if(msg != 0){
-      dxl.torqueOn(2);
-      dxl.setGoalCurrent(2, msg);  
-    }
-    else{
-      dxl.torqueOff(2);
-    }
-
-    if(msg2 != 0){
-      dxl.torqueOn(3);
-      dxl.setGoalCurrent(3, msg2);  
-    }
-    else{
-      dxl.torqueOff(3);
-    }
-    */
-
     k_sleep(100);
   }
 }
@@ -286,13 +254,18 @@ void setup(){
   
 
   // init krnl so you can create x tasks, y semaphores and z message queues
-  k_init(4,0,0); 
+  k_init(4,1,1); 
+
+  msgQ = k_crt_send_Q (1, sizeof(char[20]),  dataBufForMsgQ); 
 
   //each pt(n) is a pointer to a function t(n), priority, stack size 
-  pt1=k_crt_task(t1, 10, 500); 
+  pserialHandler=k_crt_task(serialHandler, 15, 500); 
   pt2=k_crt_task(t2, 11, 500);
   pt3=k_crt_task(t3, 12, 3000);
   pt4=k_crt_task(t4, 13, 500);
+
+
+  mutSem = k_crt_sem(1, 1);
 
   //stack size----
   //Arudino Mega has 8 kByte RAM
@@ -303,6 +276,7 @@ void setup(){
   
   // start kernel with tick speed 1 milli seconds
   k_start(1); 
+  Serial1.println("you don goofed up boaaah");
 }
 
 void loop(){ 
