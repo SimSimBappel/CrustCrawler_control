@@ -1,12 +1,18 @@
-syms theta1(t) theta2(t) theta3(t) L1 L2 L3 LC1 LC2 LC3 LCE m1 m2 m3 mEE;
+%syms theta1(t) theta2(t) theta3(t);
+theta1 = 100; theta2= 100; theta3 = 100; dtheta1 = 10; dtheta2 = 10; dtheta3 = 10;
+LC1 = 0.0332;
+LC2 = 0.1625;
+LC3 = 0.132;
 
-L2 = 16.25;
-L3 = 13.2;
-m2 = 230;
-m3 = 306;
-dtheta1 = diff(theta1, t);
-dtheta2 = diff(theta2, t);
-dtheta3 = diff(theta3, t);
+L1 = 0.0565;
+L2 = 0.2279;
+L3 = 0.1335;
+
+m1 = 0.226;
+m2 = 0.230;
+m3 = 0.306;
+%% 
+
 omega1 = dtheta1*[0;0;1];
 g = [9.815;0;0];
 z = [0;0;1];
@@ -34,21 +40,22 @@ vc3 = v3 + cross(omega3, sc3);
 sEE = s1 + s2 + [L3*cos(theta3); 0; L3*sin(theta3)];
 vEE = v3 + cross(omega3, sEE);
 
-I2= [707420.07, -24.23, -1800.90;
-     -24.23, 702116.89, 8741.67;
-     -1800.90, 8741.67, 57741.15]; % Husk at de er i g*mm^2 nu, men skal være i kg*m^2
+I2= 1.0e-03 * [0.7074   -0.0000   -0.0018;
+                   -0.0000    0.7021    0.0087;
+                   -0.0018    0.0087    0.0577]; 
 
- I1= [131530.27, 3088.91, 1397.85;
-      3088.91 ,95266.29, 180.81
-      1397.85 ,180.81, 154361.67];
+     I1= 1.0e-03 * [0.1315    0.0031    0.0014;
+                    0.0031    0.0953    0.0002;
+                    0.0014    0.0002    0.1544];
 
- I3= [726994.19, 105.15, 11403.70;
-      106.15, 632073.01, 4512.75;
-      11403.70, 4512.75, 162739.54];
 
-h1 = [0;0;5.65]+[L2+LC3;0;];
-h2 = R01*S1 + R02*Sc2 + [L2-LC2;0;0] + [LC3;0;0]; 
-h3 = R01*S1 + R02*Sc2 + R03*Sc3;
+     I3= 1.0e-03 * [0.7270    0.0001    0.0114;
+                    0.0001    0.6321    0.0045;
+                    0.0114    0.0045    0.1627];
+
+h1 = [0;0;5.65]+[L2+LC3;0;0];
+h2 = R01*s1 + R02*sc2 + [L2-LC2;0;0] + [LC3;0;0]; 
+h3 = R01*s1 + R02*sc2 + R03*sc3;
 T1 = 1/2*dot(omega1, I1*omega1);
 V1 = m1*dot(g,h1);
 T2 = 1/2*m2*dot(vc2, vc2) + 1/2*dot(omega2,I2*omega2);
@@ -56,9 +63,6 @@ V2 = m2*g*dot(g,h2);
 T3 = 1/2*m3*dot(vc3, vc3) + 1/2*dot(omega3, I3*omega3);
 V3 = m3*g*dot(g,h3);
 
-L = T1 - V1 + T2 - V2 + T3 - V3;
+L = T1 - V1(1) + T2 - V2(1) + T3 - V3(1)
 
-Torque1 = diff(diff(L, dtheta1),t)- diff(L, theta1);
-Torque2 = diff(diff(L, dtheta2),t)- diff(L, theta2);
-Torque3 = diff(diff(L, dtheta3),t)- diff(L, theta3);
 
