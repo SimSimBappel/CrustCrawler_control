@@ -18,7 +18,7 @@ struct k_msg_t *msgQ;
 
 char dataBufForMsgQ[100]; 
 
-struct k_t *mutSem, *gripSem;
+struct k_t  *gripSem;//*mutSem,
 
 
 
@@ -77,6 +77,7 @@ void serialHandler(void)
       Serial1.print("This just in ... ");
       Serial1.print(receivedChars);
       newData = false;
+      //make sure the message queue is emptied idk how
       res = k_send(msgQ, &receivedChars);
       if(receivedChars[0] == 'G'){
         k_signal(gripSem);
@@ -84,6 +85,16 @@ void serialHandler(void)
       }
     }
 
+    if(receivedChars[0] == 'R' && receivedChars[1] == 'N'){
+      for(int i=0; i<6; i++){ 
+        receivedChars[i] = 'A';
+        dxl.torqueOff(i);
+        delay(5);
+        dxl.torqueOn(i);
+      }
+      Serial1.println("Dynamixel RESTART");
+      
+    }
 /*
     k_wait(mutSem, 0);
     if (0 <= res) {
@@ -103,23 +114,39 @@ void serialHandler(void)
 
 void t2(void)
 {
-  char res;
-  char msg2[20];
-  int lostMessages;
+  //char res;
+  //char msg2[20];
+  //int lostMessages;
 
-  byte DXL_ID = 2;
+  byte DXL_ID = 1;
   dxl.torqueOff(DXL_ID);
   dxl.setOperatingMode(DXL_ID, OP_POSITION);
   dxl.torqueOn(DXL_ID);
-  dxl.setGoalPosition(DXL_ID, 1073);
+  dxl.setGoalPosition(DXL_ID, 2755);
   
-  DXL_ID = 1;
+  DXL_ID = 2;
   dxl.torqueOff(DXL_ID);
   dxl.setOperatingMode(DXL_ID, OP_POSITION);
   dxl.torqueOn(DXL_ID);
-  dxl.setGoalPosition(DXL_ID,2755);
+  dxl.setGoalPosition(DXL_ID,1073);
 
+  DXL_ID = 3; //test to see if byte works 
+  dxl.torqueOff(DXL_ID);
+  dxl.setOperatingMode(DXL_ID, OP_POSITION); //current mode is not supported by the end-effectors motors IDs 4 and 5
+  dxl.torqueOn(DXL_ID);
+  dxl.setGoalPosition(DXL_ID,2034);
 
+  DXL_ID = 4;
+  dxl.torqueOff(DXL_ID);
+  dxl.setOperatingMode(DXL_ID, OP_PWM);
+  dxl.torqueOn(DXL_ID);
+  
+
+  
+  DXL_ID = 5;
+  dxl.torqueOff(DXL_ID);
+  dxl.setOperatingMode(DXL_ID, OP_PWM);
+  dxl.torqueOn(DXL_ID);
   
 
   while(1){
@@ -134,6 +161,9 @@ void t2(void)
     //Serial.print("2: received "); Serial.print(msg2);
     //Serial.print(" lost: "); Serial.println(lostMessages);
     k_signal(mutSem);*/
+
+    
+    
     
     k_sleep(100);
   }
@@ -146,17 +176,10 @@ void gripper(void){
   char res;
   char msg2[20];
   int lostMessages;
-
-  byte DXL_ID = 4;
-  dxl.torqueOff(DXL_ID);
-  dxl.setOperatingMode(DXL_ID, OP_POSITION);
-  dxl.torqueOn(DXL_ID);
-  dxl.setGoalPosition(DXL_ID, 2149);
-  DXL_ID = 5;
-  dxl.torqueOff(DXL_ID);
-  dxl.setOperatingMode(DXL_ID, OP_POSITION);
-  dxl.torqueOn(DXL_ID);
-  dxl.setGoalPosition(DXL_ID, 2084);
+  uint8_t DXL_ID;
+  float POS = 100;
+  //bool waitAWhile = false;
+ 
 
 
   while(1){
@@ -164,30 +187,38 @@ void gripper(void){
     k_eat_ticks(2);
     
     Serial1.println("gripper active");
-    res = k_receive(msgQ, &msg2, 0, &lostMessages);
+    res = k_receive(msgQ, &msg2, 10, &lostMessages);
    
     Serial1.print("MSG2: ");
     Serial1.println(msg2);
     
       if(msg2[1] == 'O'){
         //OPEN
-        DXL_ID = 4;
-        dxl.setGoalPosition(DXL_ID, 2685);
         
+        DXL_ID = 4;
+        
+        dxl.setGoalPWM(DXL_ID, POS, UNIT_RAW);
+        
+        delay(10);
         DXL_ID = 5;
-        dxl.setGoalPosition(DXL_ID, 1637);
+        dxl.setGoalPWM(DXL_ID, -POS, UNIT_RAW);
+        
       }
       else if(msg2[1] == 'C'){
         //close
+        
         DXL_ID = 4;
-        dxl.setGoalPosition(DXL_ID, 2149);
+        dxl.setGoalPWM(DXL_ID, -POS, UNIT_RAW);
+        delay(10);
         
         DXL_ID = 5;
-        dxl.setGoalPosition(DXL_ID, 2084);
+        dxl.setGoalPWM(DXL_ID, POS, UNIT_RAW);
       }
       else{
-        Serial1.println("msg[1] is not == to c || o");
+        Serial1.println("msg2[1] is not == to c || o");
       }
+
+      
     
     
     
@@ -195,20 +226,15 @@ void gripper(void){
   }
 }
 
+
+
 void t4(void){
-
-  byte DXL_ID = 2; //test to see if byte works 
-  dxl.torqueOff(DXL_ID);
-  dxl.setOperatingMode(DXL_ID, OP_CURRENT); //current mode is not supported by the end-effectors motors IDs 4 and 5
-  dxl.torqueOn(DXL_ID);
-
-  byte DXL_ID2 = 3; //test to see if byte works 
-  dxl.torqueOff(DXL_ID2);
-  dxl.setOperatingMode(DXL_ID2, OP_CURRENT); //current mode is not supported by the end-effectors motors IDs 4 and 5
-  dxl.torqueOn(DXL_ID2);
   while(1){
+      Serial1.print("M4 load: ");
+      Serial1.print(dxl.readControlTableItem(PRESENT_LOAD, 4));
 
-  
+      Serial1.print(" M5 load: ");
+      Serial1.println(dxl.readControlTableItem(PRESENT_LOAD, 5));
     
 
 
@@ -216,6 +242,8 @@ void t4(void){
     k_sleep(50);
   }          
 }
+
+
 
 void setup(){
   //Serial definition--
@@ -246,7 +274,7 @@ void setup(){
   pt4=k_crt_task(t4, 4, 500);
 
 
-  mutSem = k_crt_sem(1, 1);
+  //mutSem = k_crt_sem(1, 1);
   gripSem = k_crt_sem(0, 1);
 
   //stack size----
