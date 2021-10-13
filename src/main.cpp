@@ -10,15 +10,13 @@ DynamixelShield dxl;
 using namespace ControlTableItem;
 
 struct k_t *pserialHandler, *pt2, *pgripper, *pt4;          
- 
-
 
 
 struct k_msg_t *msgQ;
 
 char dataBufForMsgQ[100]; 
 
-struct k_t  *gripSem;//*mutSem,
+struct k_t  *gripSem;
 
 
 
@@ -27,7 +25,7 @@ struct k_t  *gripSem;//*mutSem,
 //find proper stacksize, see void setup comments
 char s1[500]; 
 char s2[500]; 
-char s3[3000];
+char s3[500];
 char s4[500];
  
 
@@ -45,6 +43,7 @@ void serialHandler(void)
   char rc;
 
   char res;
+  bool motorsOn = true;
 
   //loop
   while(1){
@@ -85,27 +84,25 @@ void serialHandler(void)
       }
     }
 
-    if(receivedChars[0] == 'R' && receivedChars[1] == 'N'){
+    if(receivedChars[0] == 'S' && motorsOn){
       for(int i=0; i<6; i++){ 
         receivedChars[i] = 'A';
         dxl.torqueOff(i);
-        delay(5);
+      }
+      Serial1.println("Dynamixel STOP");
+      motorsOn = false;
+    }
+
+    if(receivedChars[0] == 'S' && !motorsOn){
+      Serial1.println("Dynamixel Start");
+      delay(2000);
+      for(int i=0; i<6; i++){ 
+        receivedChars[i] = 'A';
         dxl.torqueOn(i);
       }
-      Serial1.println("Dynamixel RESTART");
-      
+      motorsOn = true;
     }
-/*
-    k_wait(mutSem, 0);
-    if (0 <= res) {
-      Serial1.print("1: did deliver "); Serial1.println(receivedChars);
-    }
-    else {
-      Serial1.print("1: no deliver:>>>>>>>>>>>>>>>>>< "); Serial1.println(receivedChars);
-    }
-    k_signal(mutSem);
-*/
-    
+
 
 
     k_sleep(100);
@@ -114,27 +111,24 @@ void serialHandler(void)
 
 void t2(void)
 {
-  //char res;
-  //char msg2[20];
-  //int lostMessages;
 
-  byte DXL_ID = 1;
+  uint8_t DXL_ID = 1;
   dxl.torqueOff(DXL_ID);
-  dxl.setOperatingMode(DXL_ID, OP_POSITION);
+  dxl.setOperatingMode(DXL_ID, OP_POSITION); //set to OP_CURRENT 
   dxl.torqueOn(DXL_ID);
-  dxl.setGoalPosition(DXL_ID, 2755);
+  dxl.setGoalPosition(DXL_ID, 2755); //temp
   
   DXL_ID = 2;
   dxl.torqueOff(DXL_ID);
-  dxl.setOperatingMode(DXL_ID, OP_POSITION);
+  dxl.setOperatingMode(DXL_ID, OP_POSITION); //set to OP_CURRENT 
   dxl.torqueOn(DXL_ID);
-  dxl.setGoalPosition(DXL_ID,1073);
+  dxl.setGoalPosition(DXL_ID,1073);//temp
 
   DXL_ID = 3; //test to see if byte works 
   dxl.torqueOff(DXL_ID);
-  dxl.setOperatingMode(DXL_ID, OP_POSITION); //current mode is not supported by the end-effectors motors IDs 4 and 5
+  dxl.setOperatingMode(DXL_ID, OP_POSITION); //set to OP_CURRENT 
   dxl.torqueOn(DXL_ID);
-  dxl.setGoalPosition(DXL_ID,2034);
+  dxl.setGoalPosition(DXL_ID,2034);//temp
 
   DXL_ID = 4;
   dxl.torqueOff(DXL_ID);
@@ -150,17 +144,6 @@ void t2(void)
   
 
   while(1){
-    /*
-    k_wait(mutSem, 0);
-
-    k_signal(mutSem);
-
-    res = k_receive(msgQ, &msg2, 0, &lostMessages);
-    
-    k_wait(mutSem, 0);
-    //Serial.print("2: received "); Serial.print(msg2);
-    //Serial.print(" lost: "); Serial.println(lostMessages);
-    k_signal(mutSem);*/
 
     
     
