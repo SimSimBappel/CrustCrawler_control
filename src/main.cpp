@@ -9,14 +9,16 @@ DynamixelShield dxl;
 //This namespace is required to use Control table item names
 using namespace ControlTableItem;
 
-struct k_t *pserialHandler, *pt2, *pgripper, *pt4;          
+struct k_t *pserialHandler, *pcurrent, *pgripper, *pt4;          
 
 
-struct k_msg_t *msgQ;
+struct k_msg_t *msgQ, *msgQ2;
 
 char dataBufForMsgQ[100]; 
 
-struct k_t  *gripSem;
+char dataBufForMsgQ2[100];
+
+struct k_t  *gripSem, *curSem;
 
 
 
@@ -74,15 +76,30 @@ void serialHandler(void)
 
     if (newData) {
       Serial1.print("This just in ... ");
-      Serial1.print(receivedChars);
+      Serial1.println(receivedChars);
       newData = false;
+    }
+
+
+    if(receivedChars[0] == 'G'){
       //make sure the message queue is emptied idk how
       res = k_send(msgQ, &receivedChars);
-      if(receivedChars[0] == 'G'){
-        k_signal(gripSem);
-        
-      }
+      k_signal(gripSem);
+      receivedChars[0] = ' ';
+      k_sleep(50);
     }
+
+
+    if(receivedChars[0] == 'C'){
+      //Serial1.println("a");
+      //make sure the message queue is emptied idk how
+      res = k_send(msgQ2, &receivedChars);
+      k_signal(curSem);
+      //Serial1.println("b");
+      receivedChars[0] = ' ';
+      k_sleep(50);
+    }
+    
 
     if(receivedChars[0] == 'S' && motorsOn){
       for(int i=0; i<6; i++){ 
@@ -91,9 +108,9 @@ void serialHandler(void)
       }
       Serial1.println("Dynamixel STOP");
       motorsOn = false;
+      receivedChars[0] = ' ';
     }
-
-    if(receivedChars[0] == 'S' && !motorsOn){
+    else if(receivedChars[0] == 'S' && !motorsOn){
       Serial1.println("Dynamixel Start");
       delay(2000);
       for(int i=0; i<6; i++){ 
@@ -101,7 +118,9 @@ void serialHandler(void)
         dxl.torqueOn(i);
       }
       motorsOn = true;
+      receivedChars[0] = ' ';
     }
+
 
 
 
@@ -109,42 +128,75 @@ void serialHandler(void)
   }
 }           
 
-void t2(void)
+void current(void)
 {
 
   uint8_t DXL_ID = 1;
   dxl.torqueOff(DXL_ID);
-  dxl.setOperatingMode(DXL_ID, OP_POSITION); //set to OP_CURRENT 
+  dxl.setOperatingMode(DXL_ID, OP_CURRENT); //set to OP_CURRENT 
   dxl.torqueOn(DXL_ID);
-  dxl.setGoalPosition(DXL_ID, 2755); //temp
+  //dxl.setGoalPosition(DXL_ID, 2755); //temp
   
   DXL_ID = 2;
   dxl.torqueOff(DXL_ID);
-  dxl.setOperatingMode(DXL_ID, OP_POSITION); //set to OP_CURRENT 
+  dxl.setOperatingMode(DXL_ID, OP_CURRENT); //set to OP_CURRENT 
   dxl.torqueOn(DXL_ID);
-  dxl.setGoalPosition(DXL_ID,1073);//temp
+  //dxl.setGoalPosition(DXL_ID,1073);//temp
 
   DXL_ID = 3; //test to see if byte works 
   dxl.torqueOff(DXL_ID);
-  dxl.setOperatingMode(DXL_ID, OP_POSITION); //set to OP_CURRENT 
+  dxl.setOperatingMode(DXL_ID, OP_CURRENT); //set to OP_CURRENT 
   dxl.torqueOn(DXL_ID);
-  dxl.setGoalPosition(DXL_ID,2034);//temp
+  //dxl.setGoalPosition(DXL_ID,2034);//temp
 
   DXL_ID = 4;
   dxl.torqueOff(DXL_ID);
-  dxl.setOperatingMode(DXL_ID, OP_PWM);
+  dxl.setOperatingMode(DXL_ID, OP_PWM); 
   dxl.torqueOn(DXL_ID);
   
 
   
   DXL_ID = 5;
   dxl.torqueOff(DXL_ID);
-  dxl.setOperatingMode(DXL_ID, OP_PWM);
+  dxl.setOperatingMode(DXL_ID, OP_PWM); 
   dxl.torqueOn(DXL_ID);
+
+  char res;
+  int lostMessages;
+  char msg[20];
+  char tempMsg[4];
+  int tempCurrent;
   
 
   while(1){
+    k_wait(curSem, 0);
+    //Serial1.println("c");
+    res = k_receive(msgQ2, &msg, 10, &lostMessages);  
+    //Serial1.println("d");
+    for(int i = 1; i < 4; i++){
+      tempMsg[i-1] = msg[i];
+    }
+    tempCurrent = atoi(tempMsg);
+    Serial1.print("tempMsg: ");
+    Serial1.println(tempMsg);
+    dxl.setGoalCurrent(1, tempCurrent);
+    
+    for(int i = 4; i < 7; i++){
+      tempMsg[i-4] = msg[i];
+    }
+    tempCurrent = atoi(tempMsg);
+    Serial1.print("tempMsg: ");
+    Serial1.println(tempMsg);
+    dxl.setGoalCurrent(2, tempCurrent);
 
+    for(int i = 7; i<10; i++){
+      tempMsg[i-7] = msg[i];
+    }
+    tempCurrent = atoi(tempMsg);
+    Serial1.print("tempMsg: ");
+    Serial1.println(tempMsg);
+    dxl.setGoalCurrent(3, tempCurrent);
+    
     
     
     
@@ -157,54 +209,46 @@ void t2(void)
 
 void gripper(void){
   char res;
-  char msg2[20];
+  char msg[20];
   int lostMessages;
-  uint8_t DXL_ID;
-  float POS = 100;
-  //bool waitAWhile = false;
- 
-
+  float POS = 250;
 
   while(1){
     k_wait(gripSem, 0);
-    k_eat_ticks(2);
     
-    Serial1.println("gripper active");
-    res = k_receive(msgQ, &msg2, 10, &lostMessages);
+    dxl.torqueOff(4);
+    dxl.setOperatingMode(4, OP_PWM); 
+    dxl.torqueOn(4);
+
+    dxl.torqueOff(5);
+    dxl.setOperatingMode(5, OP_PWM); 
+    dxl.torqueOn(5);
+
+    res = k_receive(msgQ, &msg, 10, &lostMessages);
    
-    Serial1.print("MSG2: ");
-    Serial1.println(msg2);
     
-      if(msg2[1] == 'O'){
-        //OPEN
+      if(msg[1] == 'O'){//OPEN
+        Serial1.println("gripper open");
+
+        //dxl.setGoalPosition(4, 2685);
+        dxl.setGoalPWM(4, POS, UNIT_RAW);
         
-        DXL_ID = 4;
-        
-        dxl.setGoalPWM(DXL_ID, POS, UNIT_RAW);
-        
-        delay(10);
-        DXL_ID = 5;
-        dxl.setGoalPWM(DXL_ID, -POS, UNIT_RAW);
-        
+        //dxl.setGoalPosition(5, 1600);
+        dxl.setGoalPWM(5, -POS, UNIT_RAW);
       }
-      else if(msg2[1] == 'C'){
-        //close
+      else if(msg[1] == 'C'){//close
+        Serial1.println("gripper close");
         
-        DXL_ID = 4;
-        dxl.setGoalPWM(DXL_ID, -POS, UNIT_RAW);
-        delay(10);
-        
-        DXL_ID = 5;
-        dxl.setGoalPWM(DXL_ID, POS, UNIT_RAW);
+        //dxl.setGoalPosition(4, 2149);
+        dxl.setGoalPWM(4, -POS, UNIT_RAW);
+      
+        //dxl.setGoalPosition(5, 2084);
+        dxl.setGoalPWM(5, POS, UNIT_RAW);
       }
       else{
         Serial1.println("msg2[1] is not == to c || o");
       }
 
-      
-    
-    
-    
     k_sleep(100);
   }
 }
@@ -212,30 +256,59 @@ void gripper(void){
 
 
 void t4(void){
+  int m4Pos;
+  int m5Pos;
+  int m4Load;
+  int m5Load;
   while(1){
+    //Serial spammer
       Serial1.print("M4 load: ");
-      Serial1.print(dxl.readControlTableItem(PRESENT_LOAD, 4));
+      m4Load = dxl.readControlTableItem(PRESENT_LOAD, 4);
+      Serial1.print(m4Load);
+      Serial1.print(" Temp: ");
+      Serial1.print(dxl.readControlTableItem(PRESENT_TEMPERATURE, 4));
 
       Serial1.print(" M5 load: ");
-      Serial1.println(dxl.readControlTableItem(PRESENT_LOAD, 5));
-    
+      m5Load = dxl.readControlTableItem(PRESENT_LOAD, 5);
+      Serial1.print(m5Load);
+      Serial1.print(" Temp: ");
+      Serial1.println(dxl.readControlTableItem(PRESENT_TEMPERATURE, 5));
+
+      if(m4Load < -250 && m5Load > 250){
+        Serial1.println("i did the thing");
+        m4Pos = dxl.getPresentPosition(4);
+        m5Pos = dxl.getPresentPosition(5);
+        dxl.torqueOff(4);
+        dxl.setOperatingMode(4,OP_POSITION);
+        dxl.torqueOn(4);
+        dxl.torqueOff(5);
+        dxl.setOperatingMode(5,OP_POSITION);
+        dxl.torqueOn(5);
+        dxl.setGoalPosition(4, m4Pos);
+        dxl.setGoalPosition(5, m5Pos);
+      }
 
 
 
-    k_sleep(50);
+      
+
+
+    k_sleep(100);
   }          
 }
 
 
 
 void setup(){
+  
   //Serial definition--
   //Native serial port (switches from USB-port to dynamixel with physical switch)
   dxl.begin(57600);
   //second serial (the one that communicates with UNO)
   Serial1.begin(9600);
   //--
-
+  
+  
   
   
 
@@ -246,19 +319,21 @@ void setup(){
   
 
   // init krnl so you can create x tasks, y semaphores and z message queues
-  k_init(4,2,1); 
+  k_init(4,2,2); 
 
-  msgQ = k_crt_send_Q (1, sizeof(char[20]),  dataBufForMsgQ); 
+  msgQ = k_crt_send_Q (1, sizeof(char[20]),  dataBufForMsgQ);
+  msgQ2 = k_crt_send_Q (1, sizeof(char[20]),  dataBufForMsgQ2); 
 
   //each pt(n) is a pointer to a function t(n), priority, stack size 
-  pserialHandler=k_crt_task(serialHandler, 3, 500); 
-  pt2=k_crt_task(t2, 3, 500);
-  pgripper=k_crt_task(gripper, 4, 3000);
-  pt4=k_crt_task(t4, 4, 500);
+  pserialHandler=k_crt_task(serialHandler, 15, 500); 
+  pcurrent=k_crt_task(current, 13, 500);
+  pgripper=k_crt_task(gripper, 1, 3000);
+  pt4=k_crt_task(t4, 12, 500);
 
 
-  //mutSem = k_crt_sem(1, 1);
+  
   gripSem = k_crt_sem(0, 1);
+  curSem = k_crt_sem(0,1);
 
   //stack size----
   //Arudino Mega has 8 kByte RAM
@@ -268,8 +343,10 @@ void setup(){
   //!!! to find the unused stacksize call "k_unused_stack" !!!
   
   // start kernel with tick speed 1 milli seconds
-  k_start(1); 
-  Serial1.println("you don goofed up boaaah");
+  int res;
+  res = k_start(1); // 1 milli sec tick speed
+  // you will never return from k_start
+  Serial1.print("ups an error occured: "); Serial.println(res);
 }
 
 void loop(){ 
