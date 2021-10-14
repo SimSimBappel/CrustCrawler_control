@@ -1,8 +1,11 @@
-syms theta1 theta2 theta3;
-% theta1=0; theta2= 0; theta3 = 0;
-h12 = 0.0565;
-h23 = 0.222;
-h3EE = 0.251;
+syms theta1 theta2 theta3 L1 L2 L3;
+% L1 = 0.0565;
+% L2 = 0.222;
+% L3 = 0.251;
+
+
+%Rotation Matrices
+
 
 % Transformations Matrices
 T01 = [cos(theta1) -sin(theta1) 0 0;
@@ -10,15 +13,13 @@ T01 = [cos(theta1) -sin(theta1) 0 0;
        0           0            1 0;
        0           0            0 1];
 T12 = [cos(theta2) -sin(theta2) 0 0;
-       0           1            0 0;
-       sin(theta2) cos(theta2)  0 h12;
+       0            0           -1 0;
+       sin(theta2) cos(theta2)  0 L1;
        0           0            0 1];
    
-T23 = [cos(theta3) 0 -sin(theta3) h23;
-      sin(theta3) 0 cos(theta3)  0;
-      0           1 0            0;
-      0           0 0            1];  
-T3EE =[1 0 0 h3EE
+T23 = transl(L2,0,0)*trotx(-pi/2)*trotz(theta3);
+
+T3EE =[1 0 0 L3
        0 1 0 0
        0 0 1 0
        0 0 0 1];
