@@ -287,12 +287,6 @@ void t4(void){
         dxl.setGoalPosition(4, m4Pos);
         dxl.setGoalPosition(5, m5Pos);
       }
-
-
-
-      
-
-
     k_sleep(100);
   }          
 }
