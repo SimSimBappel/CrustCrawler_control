@@ -25,7 +25,7 @@ struct k_t  *gripSem, *curSem;
 
 
 //find proper stacksize, see void setup comments
-char s1[500]; 
+char s1[1000]; 
 char s2[500]; 
 char s3[500];
 char s4[500];
@@ -61,7 +61,7 @@ void serialHandler(void)
           }
         }
         else {
-            receivedChars[ndx] = '\0'; // terminate the string
+            receivedChars[ndx] = '\0'; 
             recvInProgress = false;
             ndx = 0;
             newData = true;
@@ -90,12 +90,10 @@ void serialHandler(void)
     }
 
 
-    if(receivedChars[0] == 'C'){
-      //Serial1.println("a");
+    if(receivedChars[0] == 'C'){ //current input given in centiampere
       //make sure the message queue is emptied idk how
       res = k_send(msgQ2, &receivedChars);
       k_signal(curSem);
-      //Serial1.println("b");
       receivedChars[0] = ' ';
       k_sleep(50);
     }
@@ -133,21 +131,21 @@ void current(void)
 
   uint8_t DXL_ID = 1;
   dxl.torqueOff(DXL_ID);
-  dxl.setOperatingMode(DXL_ID, OP_CURRENT); //set to OP_CURRENT 
+  dxl.setOperatingMode(DXL_ID, OP_CURRENT); 
   dxl.torqueOn(DXL_ID);
-  //dxl.setGoalPosition(DXL_ID, 2755); //temp
+  
   
   DXL_ID = 2;
   dxl.torqueOff(DXL_ID);
-  dxl.setOperatingMode(DXL_ID, OP_CURRENT); //set to OP_CURRENT 
+  dxl.setOperatingMode(DXL_ID, OP_CURRENT); 
   dxl.torqueOn(DXL_ID);
-  //dxl.setGoalPosition(DXL_ID,1073);//temp
+  
 
-  DXL_ID = 3; //test to see if byte works 
+  DXL_ID = 3; 
   dxl.torqueOff(DXL_ID);
-  dxl.setOperatingMode(DXL_ID, OP_CURRENT); //set to OP_CURRENT 
+  dxl.setOperatingMode(DXL_ID, OP_CURRENT); 
   dxl.torqueOn(DXL_ID);
-  //dxl.setGoalPosition(DXL_ID,2034);//temp
+  
 
   DXL_ID = 4;
   dxl.torqueOff(DXL_ID);
@@ -164,42 +162,64 @@ void current(void)
   char res;
   int lostMessages;
   char msg[20];
-  char tempMsg[4];
+  char tempMsg[5];
   int tempCurrent;
   
 
+  unsigned long prevMillis = 0;
+  bool serialDebug = true;
+
   while(1){
     k_wait(curSem, 0);
-    //Serial1.println("c");
+    prevMillis = millis();
+
     res = k_receive(msgQ2, &msg, 10, &lostMessages);  
-    //Serial1.println("d");
-    for(int i = 1; i < 4; i++){
-      tempMsg[i-1] = msg[i];
-    }
-    tempCurrent = atoi(tempMsg);
-    Serial1.print("tempMsg: ");
-    Serial1.println(tempMsg);
-    dxl.setGoalCurrent(1, tempCurrent);
     
-    for(int i = 4; i < 7; i++){
-      tempMsg[i-4] = msg[i];
+   
+      for(int i = 1; i < 6; i++){
+        tempMsg[i-1] = msg[i];
+      }
+      tempCurrent = atoi(tempMsg);
+      
+      if(serialDebug){
+        Serial1.print("tempMsg: ");
+        Serial1.println(tempMsg);
+      }
+      
+      tempCurrent = tempCurrent * 10; // input from milli- to centiampere
+      dxl.setGoalCurrent(1, tempCurrent, UNIT_MILLI_AMPERE);
+    
+
+    for(int i = 6; i < 11; i++){
+      tempMsg[i-6] = msg[i];
     }
     tempCurrent = atoi(tempMsg);
-    Serial1.print("tempMsg: ");
-    Serial1.println(tempMsg);
+    
+    if(serialDebug){
+      Serial1.print("tempMsg: ");
+      Serial1.println(tempMsg);
+    }
+    
+    tempCurrent = tempCurrent * 10;
     dxl.setGoalCurrent(2, tempCurrent);
 
-    for(int i = 7; i<10; i++){
-      tempMsg[i-7] = msg[i];
+
+    for(int i = 11; i<16; i++){
+      tempMsg[i-11] = msg[i];
     }
     tempCurrent = atoi(tempMsg);
-    Serial1.print("tempMsg: ");
-    Serial1.println(tempMsg);
+    
+    if(serialDebug){
+      Serial1.print("tempMsg: ");
+      Serial1.println(tempMsg);
+    }
+
+    tempCurrent = tempCurrent * 10;
     dxl.setGoalCurrent(3, tempCurrent);
     
     
-    
-    
+    Serial1.print("amp time: ");
+    Serial1.println(millis() - prevMillis);    
     k_sleep(100);
   }
   
@@ -211,7 +231,7 @@ void gripper(void){
   char res;
   char msg[20];
   int lostMessages;
-  float POS = 250;
+  float POS = 350;
 
   while(1){
     k_wait(gripSem, 0);
@@ -256,37 +276,44 @@ void gripper(void){
 
 
 void t4(void){
+  bool serialDebug = true;
   int m4Pos;
   int m5Pos;
-  int m4Load;
-  int m5Load;
   while(1){
     //Serial spammer
-      Serial1.print("M4 load: ");
-      m4Load = dxl.readControlTableItem(PRESENT_LOAD, 4);
-      Serial1.print(m4Load);
-      Serial1.print(" Temp: ");
-      Serial1.print(dxl.readControlTableItem(PRESENT_TEMPERATURE, 4));
-
-      Serial1.print(" M5 load: ");
-      m5Load = dxl.readControlTableItem(PRESENT_LOAD, 5);
-      Serial1.print(m5Load);
+    
+      
+    for(int i = 0; i <= 5 && serialDebug; i++){
+      Serial1.print(" M");
+      Serial1.print(i);
+      Serial1.print(" load: ");      
+      Serial1.print(dxl.readControlTableItem(PRESENT_LOAD, i));
       Serial1.print(" Temp: ");
       Serial1.println(dxl.readControlTableItem(PRESENT_TEMPERATURE, 5));
+    }
 
-      if(m4Load < -250 && m5Load > 250){
-        Serial1.println("i did the thing");
-        m4Pos = dxl.getPresentPosition(4);
-        m5Pos = dxl.getPresentPosition(5);
-        dxl.torqueOff(4);
-        dxl.setOperatingMode(4,OP_POSITION);
-        dxl.torqueOn(4);
-        dxl.torqueOff(5);
-        dxl.setOperatingMode(5,OP_POSITION);
-        dxl.torqueOn(5);
-        dxl.setGoalPosition(4, m4Pos);
-        dxl.setGoalPosition(5, m5Pos);
+
+    for(int i = 1; i <= 5; i++){
+      if(dxl.readControlTableItem(PRESENT_TEMPERATURE, i) == 0){
+        Serial1.print("ERROR motor: ");
+        Serial1.print(i);
+        Serial1.println("is not connected");
       }
+    }
+    if(dxl.readControlTableItem(PRESENT_LOAD, 4) < -250 && dxl.readControlTableItem(PRESENT_LOAD, 5) > 250){
+      Serial1.println("Gripper Fixed");
+      m4Pos = dxl.getPresentPosition(4);
+      m5Pos = dxl.getPresentPosition(5);
+      dxl.torqueOff(4);
+      dxl.setOperatingMode(4,OP_POSITION);
+      dxl.torqueOn(4);
+      dxl.torqueOff(5);
+      dxl.setOperatingMode(5,OP_POSITION);
+      dxl.torqueOn(5);
+      dxl.setGoalPosition(4, m4Pos);
+      dxl.setGoalPosition(5, m5Pos);
+    }
+
     k_sleep(100);
   }          
 }
@@ -299,7 +326,7 @@ void setup(){
   //Native serial port (switches from USB-port to dynamixel with physical switch)
   dxl.begin(57600);
   //second serial (the one that communicates with UNO)
-  Serial1.begin(9600);
+  Serial1.begin(57600);
   //--
   
   

@@ -76,4 +76,52 @@
       Serial1.println(-Output);
       dxl.setGoalCurrent(DXL_ID, -Output);
     }*/
+
+
+
+
+
+    /*
+    char res;
+  int lostMessages;
+  char msg[20];
+  
+  int tempCurrent;
+  
+
+  unsigned long prevMillis = 0;
+  bool serialDebug = true;
+
+  while(1){
+    k_wait(curSem, 0);
+    prevMillis = millis();
+
+    res = k_receive(msgQ2, &msg, 10, &lostMessages);  
+    
+    for(int x = 1; x < 4; x++){
+      char tempMsg[5]= {' ',' ',' ',' ',' '};
+      int startVal = 5*x-4;
+      int endVal = 5*x+1;
+      Serial1.print("start: ");
+      Serial1.print(startVal);
+      Serial1.print(" endval: ");
+      Serial1.println(endVal);
+      
+      for(int i = startVal; i < endVal; i++){
+        tempMsg[i-startVal+1] = msg[i];
+      }
+      tempCurrent = atoi(tempMsg);
+      
+      if(serialDebug){
+        Serial1.print("tempMsg: ");
+        Serial1.println(tempMsg);
+        Serial1.print("tempCurrent: ");
+        Serial1.println(tempCurrent);
+      }
+      
+      tempCurrent = tempCurrent * 10; // input from milli- to centiampere
+      dxl.setGoalCurrent(x, tempCurrent, UNIT_MILLI_AMPERE);
+      delay(10);
+    }
+*/
       
