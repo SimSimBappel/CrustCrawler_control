@@ -90,7 +90,7 @@ void serialHandler(void)
     }
 
 
-    if(receivedChars[0] == 'C'){ //current input given in centiampere
+    if(receivedChars[0] == 'C'){ //current input given in miliampere
       //make sure the message queue is emptied idk how
       res = k_send(msgQ2, &receivedChars);
       k_signal(curSem);
@@ -119,9 +119,6 @@ void serialHandler(void)
       receivedChars[0] = ' ';
     }
 
-
-
-
     k_sleep(100);
   }
 }           
@@ -135,9 +132,10 @@ void current(void)
   dxl.torqueOn(DXL_ID);
   
   
+  
   DXL_ID = 2;
   dxl.torqueOff(DXL_ID);
-  dxl.setOperatingMode(DXL_ID, OP_CURRENT); 
+  dxl.setOperatingMode(DXL_ID, OP_CURRENT);
   dxl.torqueOn(DXL_ID);
   
 
@@ -151,7 +149,6 @@ void current(void)
   dxl.torqueOff(DXL_ID);
   dxl.setOperatingMode(DXL_ID, OP_PWM); 
   dxl.torqueOn(DXL_ID);
-  
 
   
   DXL_ID = 5;
@@ -175,32 +172,27 @@ void current(void)
 
     res = k_receive(msgQ2, &msg, 10, &lostMessages);  
     
-   
-      for(int i = 1; i < 6; i++){
-        tempMsg[i-1] = msg[i];
-      }
-      tempCurrent = atoi(tempMsg);
-      
-      if(serialDebug){
-        Serial1.print("tempMsg: ");
-        Serial1.println(tempMsg);
-      }
-      
-      tempCurrent = tempCurrent * 10; // input from milli- to centiampere
-      dxl.setGoalCurrent(1, tempCurrent, UNIT_MILLI_AMPERE);
-    
-
-    for(int i = 6; i < 11; i++){
-      tempMsg[i-6] = msg[i];
+    for(int i = 1; i < 6; i++){
+      tempMsg[i-1] = msg[i];
     }
     tempCurrent = atoi(tempMsg);
     
     if(serialDebug){
       Serial1.print("tempMsg: ");
       Serial1.println(tempMsg);
+    }  
+    dxl.setGoalCurrent(1, tempCurrent, UNIT_MILLI_AMPERE);
+  
+
+    for(int i = 6; i < 11; i++){
+      tempMsg[i-6] = msg[i];
     }
-    
-    tempCurrent = tempCurrent * 10;
+    tempCurrent = atoi(tempMsg);
+
+    if(serialDebug){
+      Serial1.print("tempMsg: ");
+      Serial1.println(tempMsg);
+    }
     dxl.setGoalCurrent(2, tempCurrent);
 
 
@@ -208,13 +200,12 @@ void current(void)
       tempMsg[i-11] = msg[i];
     }
     tempCurrent = atoi(tempMsg);
-    
+
     if(serialDebug){
       Serial1.print("tempMsg: ");
       Serial1.println(tempMsg);
     }
-
-    tempCurrent = tempCurrent * 10;
+    
     dxl.setGoalCurrent(3, tempCurrent);
     
     
@@ -245,7 +236,7 @@ void gripper(void){
     dxl.torqueOn(5);
 
     res = k_receive(msgQ, &msg, 10, &lostMessages);
-   
+    
     
       if(msg[1] == 'O'){//OPEN
         Serial1.println("gripper open");
@@ -289,7 +280,10 @@ void t4(void){
       Serial1.print(" load: ");      
       Serial1.print(dxl.readControlTableItem(PRESENT_LOAD, i));
       Serial1.print(" Temp: ");
-      Serial1.println(dxl.readControlTableItem(PRESENT_TEMPERATURE, 5));
+      Serial1.print(dxl.readControlTableItem(PRESENT_TEMPERATURE, 5));
+      Serial1.print(" Angle: ");
+      Serial1.print(dxl.getPresentPosition(i));
+      Serial1.println();
     }
 
 
@@ -314,6 +308,7 @@ void t4(void){
       dxl.setGoalPosition(5, m5Pos);
     }
 
+
     k_sleep(100);
   }          
 }
@@ -328,10 +323,7 @@ void setup(){
   //second serial (the one that communicates with UNO)
   Serial1.begin(57600);
   //--
-  
-  
-  
-  
+
 
   dxl.setPortProtocolVersion(DXL_PROTOCOL_VERSION);
 
