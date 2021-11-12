@@ -75,8 +75,8 @@ void serialHandler(void)
 
 
     if (newData) {
-      Serial1.print("This just in ... ");
-      Serial1.println(receivedChars);
+      //Serial1.print("This just in ... ");
+      //Serial1.print(receivedChars);
       newData = false;
     }
 
@@ -90,7 +90,7 @@ void serialHandler(void)
     }
 
 
-    if(receivedChars[0] == 'C'){ //current input given in miliampere
+    if(receivedChars[0] == 'P'){ //current input given in miliampere
       //make sure the message queue is emptied idk how
       res = k_send(msgQ2, &receivedChars);
       k_signal(curSem);
@@ -119,7 +119,7 @@ void serialHandler(void)
       receivedChars[0] = ' ';
     }
 
-    k_sleep(100);
+    k_sleep(30);
   }
 }           
 
@@ -128,14 +128,14 @@ void current(void)
 
   uint8_t DXL_ID = 1;
   dxl.torqueOff(DXL_ID);
-  dxl.setOperatingMode(DXL_ID, OP_CURRENT); 
+  dxl.setOperatingMode(DXL_ID, OP_POSITION); 
   dxl.torqueOn(DXL_ID);
   
   
   
   DXL_ID = 2;
   dxl.torqueOff(DXL_ID);
-  dxl.setOperatingMode(DXL_ID, OP_CURRENT);
+  dxl.setOperatingMode(DXL_ID, OP_POSITION);
   dxl.torqueOn(DXL_ID);
   
 
@@ -159,8 +159,9 @@ void current(void)
   char res;
   int lostMessages;
   char msg[20];
-  char tempMsg[5];
-  int tempCurrent;
+  char tempMsg[7];
+  int tempPos;
+  int lastKomma;
   
 
   unsigned long prevMillis = 0;
@@ -171,46 +172,45 @@ void current(void)
     prevMillis = millis();
 
     res = k_receive(msgQ2, &msg, 10, &lostMessages);  
-    
-    for(int i = 1; i < 6; i++){
-      tempMsg[i-1] = msg[i];
-    }
-    tempCurrent = atoi(tempMsg);
-    
-    if(serialDebug){
-      Serial1.print("tempMsg: ");
-      Serial1.println(tempMsg);
-    }  
-    dxl.setGoalCurrent(1, tempCurrent, UNIT_MILLI_AMPERE);
-  
 
-    for(int i = 6; i < 11; i++){
-      tempMsg[i-6] = msg[i];
-    }
-    tempCurrent = atoi(tempMsg);
-
-    if(serialDebug){
-      Serial1.print("tempMsg: ");
-      Serial1.println(tempMsg);
-    }
-    dxl.setGoalCurrent(2, tempCurrent);
-
-
-    for(int i = 11; i<16; i++){
-      tempMsg[i-11] = msg[i];
-    }
-    tempCurrent = atoi(tempMsg);
-
-    if(serialDebug){
-      Serial1.print("tempMsg: ");
-      Serial1.println(tempMsg);
-    }
-    
-    dxl.setGoalCurrent(3, tempCurrent);
+    //P,roll,pitch
     
     
-    Serial1.print("amp time: ");
-    Serial1.println(millis() - prevMillis);    
+    for(int i = 0; i < 7; i++){
+      tempMsg[i]= ' ';
+    }
+
+    for(int i = 1; i<7; i++){
+      if(msg[i] == ','){
+        lastKomma = i+1;
+        i=100;
+      }
+      else{
+        tempMsg[i-1]= msg[i];
+      }
+    }
+    tempPos = 2700-atoi(tempMsg);
+    Serial1.print("m1: ");  
+    Serial1.print(tempPos);
+    dxl.setGoalPosition(1,tempPos);
+
+    for(int i = 0; i < 7; i++){
+      tempMsg[i]= ' ';
+    }
+
+    for(int i = lastKomma; i<13; i++){
+      if(msg[i] == ','){
+        break;
+      }
+      else{
+        tempMsg[i-lastKomma]= msg[i];
+      }
+    }
+    tempPos = 1170-atoi(tempMsg);
+    Serial1.print("m2: ");  
+    Serial1.println(tempPos);
+    dxl.setGoalPosition(2,tempPos);
+
     k_sleep(100);
   }
   
@@ -260,6 +260,19 @@ void gripper(void){
         Serial1.println("msg2[1] is not == to c || o");
       }
 
+
+/*
+      for(int i = 11; i<16; i++){
+      tempMsg[i-11] = msg[i];
+    }
+    tempCurrent = atoi(tempMsg);
+
+    if(serialDebug){
+      Serial1.print("tempMsg: ");make work plz
+      Serial1.println(tempMsg);
+    }
+    dxl.setGoalCurrent(3, tempCurrent);*/
+
     k_sleep(100);
   }
 }
@@ -267,14 +280,14 @@ void gripper(void){
 
 
 void t4(void){
-  bool serialDebug = true;
+  bool serialDebug = false;
   int m4Pos;
   int m5Pos;
   while(1){
     //Serial spammer
     
       
-    for(int i = 0; i <= 5 && serialDebug; i++){
+    for(int i = 1; i <= 5 && serialDebug; i++){
       Serial1.print(" M");
       Serial1.print(i);
       Serial1.print(" load: ");      
@@ -287,7 +300,7 @@ void t4(void){
     }
 
 
-    for(int i = 1; i <= 5; i++){
+    for(int i = 1; i <= 5 && serialDebug; i++){
       if(dxl.readControlTableItem(PRESENT_TEMPERATURE, i) == 0){
         Serial1.print("ERROR motor: ");
         Serial1.print(i);
