@@ -34,10 +34,6 @@ void setup() {
   while (!Serial);
   mySerial.begin(57600);
 
-#ifdef _ESP32_HAL_I2C_H_ // For ESP32
-  Wire.begin(SDA_PIN, SCL_PIN);
-  mySensor.setWire(&Wire);
-#endif
 
   bme.begin();
   mySensor.beginAccel();
