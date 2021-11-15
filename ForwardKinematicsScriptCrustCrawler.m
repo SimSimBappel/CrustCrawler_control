@@ -1,11 +1,8 @@
-syms theta1 theta2 theta3 L1 L2 L3;
-% L1 = 0.0565;
-% L2 = 0.222;
-% L3 = 0.251;
-
-
-%Rotation Matrices
-
+%syms theta1 theta2 theta3;
+theta1 = 0.6574; theta2 = 1.0472; theta3 = 0.2618;
+L1 = 0.0565;
+L2 = 0.222;
+L3 = 0.251;
 
 % Transformations Matrices
 T01 = [cos(theta1) -sin(theta1) 0 0;
