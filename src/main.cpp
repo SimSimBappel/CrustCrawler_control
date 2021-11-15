@@ -129,13 +129,15 @@ void current(void)
   uint8_t DXL_ID = 1;
   dxl.torqueOff(DXL_ID);
   dxl.setOperatingMode(DXL_ID, OP_POSITION); 
+  dxl.writeControlTableItem(PROFILE_VELOCITY, DXL_ID, 50);
+  dxl.writeControlTableItem(PROFILE_ACCELERATION, DXL_ID, 20);
   dxl.torqueOn(DXL_ID);
-  
-  
   
   DXL_ID = 2;
   dxl.torqueOff(DXL_ID);
   dxl.setOperatingMode(DXL_ID, OP_POSITION);
+  dxl.writeControlTableItem(PROFILE_VELOCITY, DXL_ID, 50);
+  dxl.writeControlTableItem(PROFILE_ACCELERATION, DXL_ID, 20);
   dxl.torqueOn(DXL_ID);
   
 
@@ -298,7 +300,6 @@ void t4(void){
       Serial1.print(dxl.getPresentPosition(i));
       Serial1.println();
     }
-
 
     for(int i = 1; i <= 5 && serialDebug; i++){
       if(dxl.readControlTableItem(PRESENT_TEMPERATURE, i) == 0){
