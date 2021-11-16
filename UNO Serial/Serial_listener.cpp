@@ -1,11 +1,10 @@
-    /*
-  by MohammedDamirchi
-  Home
-*/
 #include <MPU9250_asukiaaa.h>
 #include <Adafruit_BMP280.h>
 #include <math.h>
 #include <SoftwareSerial.h>
+#include <EMG.h>
+
+EMG emg;
 
 SoftwareSerial mySerial(10, 11); // RX, TX
 
@@ -30,7 +29,7 @@ float roll,pitch; // roll == M1, pitch == M2 bacts
 
 int fjollet = 0;
 void setup() {
-  Serial.begin(57600);
+  Serial.begin(115200);
   while (!Serial);
   mySerial.begin(57600);
 
@@ -90,24 +89,43 @@ void loop() {
     if(aZ_show < 0){
       roll = 180 - roll;
       }
-
+/*
     Serial.print(roll);
     Serial.print("    ");
     Serial.println(pitch);
-
+*/
     //conversion to dxl units
     roll = roll / 0.088;
     pitch = pitch /0.088;
 
     sendroll = int(roll);
     sendpitch = int(pitch);
-   
+   /*
     mySerial.print("<P");
     mySerial.print(String(sendroll));
     mySerial.print(",");
     mySerial.print(String(sendpitch));
     mySerial.print(">\n");
+*/
+    emg.GetInput(100);
+    int EMG1 = emg.EMG1();
+    int EMG2 = emg.EMG2();
 
+    Serial.println(EMG1);
+    Serial.print("    ");
+    Serial.print(EMG2);
+    
+    bool gripperToggle = false;
+
+    if( EMG2 > 25 && gripperToggle == false){
+      mySerial.print("<GO>");
+      gripperToggle = true;
+      delay (2500);
+      }
+    if(EMG2 > 25 && gripperToggle == true){
+      mySerial.print("<GC>");
+      gripperToggle = false;
+      }
     
 
 /*
