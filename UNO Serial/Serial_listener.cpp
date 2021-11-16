@@ -76,9 +76,24 @@ void loop() {
     aY_show=aY_show/10;
     aZ_show=aZ_show/10;
 
+     
 
     roll = atan(aY_show / sqrt(pow(aX_show, 2) + pow(aZ_show, 2))) * 180 / 3.14;
     pitch = atan(-1 * aX_show / sqrt(pow(aY_show, 2) + pow(aZ_show, 2))) * 180 / 3.14;
+/*
+    if(aZ_show < 0 && aX_show > 0){
+      pitch = - 180 - pitch;
+
+      }
+
+*/
+    if(aZ_show < 0){
+      roll = 180 - roll;
+      }
+
+    Serial.print(roll);
+    Serial.print("    ");
+    Serial.println(pitch);
 
     //conversion to dxl units
     roll = roll / 0.088;
@@ -86,12 +101,14 @@ void loop() {
 
     sendroll = int(roll);
     sendpitch = int(pitch);
-
+   
     mySerial.print("<P");
     mySerial.print(String(sendroll));
     mySerial.print(",");
     mySerial.print(String(sendpitch));
     mySerial.print(">\n");
+
+    
 
 /*
     //Serial.print("<P");
