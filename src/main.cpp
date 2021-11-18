@@ -41,6 +41,7 @@ void serialHandler(void)
 
   //loop
   while(1){
+    int t4Millis = millis(); //delay tester
     while (Serial1.available() > 0 && newData == false) {
       rc = Serial1.read();
 
@@ -78,7 +79,7 @@ void serialHandler(void)
       res = k_send(msgQ, &receivedChars);
       k_signal(gripSem);
       receivedChars[0] = ' ';
-      k_sleep(50);
+      k_sleep(10);
     }
 
 
@@ -87,7 +88,7 @@ void serialHandler(void)
       res = k_send(msgQ2, &receivedChars);
       k_signal(curSem);
       receivedChars[0] = ' ';
-      k_sleep(50);
+      k_sleep(10);
     }
     
 
@@ -111,7 +112,12 @@ void serialHandler(void)
       receivedChars[0] = ' ';
     }
 
-    k_sleep(30);
+    //delay tester
+    Serial1.print("t4 delay: ");
+    Serial1.println(t4Millis-startMillis);   
+    startMillis = t4Millis;  
+
+    k_sleep(10);
   }
 }           
 
@@ -121,14 +127,14 @@ void current(void)
   uint8_t DXL_ID = 1;
   dxl.torqueOff(DXL_ID);
   dxl.setOperatingMode(DXL_ID, OP_POSITION); 
-  dxl.writeControlTableItem(PROFILE_VELOCITY, DXL_ID, 50);
+  dxl.writeControlTableItem(PROFILE_VELOCITY, DXL_ID, 200);
   dxl.writeControlTableItem(PROFILE_ACCELERATION, DXL_ID, 20);
   dxl.torqueOn(DXL_ID);
   
   DXL_ID = 2;
   dxl.torqueOff(DXL_ID);
   dxl.setOperatingMode(DXL_ID, OP_POSITION);
-  dxl.writeControlTableItem(PROFILE_VELOCITY, DXL_ID, 50);
+  dxl.writeControlTableItem(PROFILE_VELOCITY, DXL_ID, 200);
   dxl.writeControlTableItem(PROFILE_ACCELERATION, DXL_ID, 20);
   dxl.torqueOn(DXL_ID);
   
@@ -137,7 +143,7 @@ void current(void)
   dxl.torqueOff(DXL_ID);
   dxl.setOperatingMode(DXL_ID, OP_POSITION); // Skal sættes til current senere hvis control system skal laves
   dxl.writeControlTableItem(PROFILE_VELOCITY, DXL_ID, 50);
-  dxl.writeControlTableItem(PROFILE_ACCELERATION, DXL_ID, 20);
+  dxl.writeControlTableItem(PROFILE_ACCELERATION, DXL_ID, 10);
   dxl.torqueOn(DXL_ID);
   
 
@@ -167,8 +173,6 @@ void current(void)
   bool serialDebug = true;
 
   while(1){
-
-    int t4Millis = millis(); //delay tester
 
     k_wait(curSem, 0);
     prevMillis = millis();
@@ -269,10 +273,7 @@ void current(void)
       dxl.setGoalPosition(5, m5Pos);
     }
     
-    //delay tester
-    Serial1.print("t4 delay: ");
-    Serial1.println(t4Millis-startMillis);   
-    startMillis = t4Millis;  
+   
     
     k_sleep(100);
   }
@@ -328,32 +329,12 @@ void gripper(void){
 
 void t4(void){
   
-  bool serialDebug = false;
+  
   while(1){
-    //Serial spammer
-   
-    for(int i = 1; i <= 5 && serialDebug; i++){
-      Serial1.print(" M");
-      Serial1.print(i);
-      Serial1.print(" load: ");      
-      Serial1.print(dxl.readControlTableItem(PRESENT_LOAD, i));
-      Serial1.print(" Temp: ");
-      Serial1.print(dxl.readControlTableItem(PRESENT_TEMPERATURE, 5));
-      Serial1.print(" Angle: ");
-      Serial1.print(dxl.getPresentPosition(i));
-      Serial1.println();
-    }
-
-    for(int i = 1; i <= 5 && serialDebug; i++){
-      if(dxl.readControlTableItem(PRESENT_TEMPERATURE, i) == 0){
-        Serial1.print("ERROR motor: ");
-        Serial1.print(i);
-        Serial1.println("is not connected");
-      }
-    }  
+      
 }
 
-    k_sleep(100);
+    k_sleep(10);
   }  
   
 void setup(){
@@ -379,12 +360,10 @@ void setup(){
   msgQ2 = k_crt_send_Q (1, sizeof(char[20]),  dataBufForMsgQ2); 
 
   //each pt(n) is a pointer to a function t(n), priority, stack size 
-  pserialHandler=k_crt_task(serialHandler, 3, 500); 
-  pcurrent=k_crt_task(current, 1, 500);
-  pgripper=k_crt_task(gripper, 2, 3000);
-  pt4=k_crt_task(t4, 12, 500);
-
-
+  pserialHandler=k_crt_task(serialHandler, 1, 500); 
+  pcurrent=k_crt_task(current, 2, 500);
+  pgripper=k_crt_task(gripper, 3, 3000);
+  pt4=k_crt_task(t4, 5, 500);
   
   gripSem = k_crt_sem(0, 1);
   curSem = k_crt_sem(0,1);
@@ -404,6 +383,31 @@ void setup(){
 }
 
 void loop(){ 
+/*
+bool serialDebug = false; //not in while(1)
+  //Serial spammer
+   
+    for(int i = 1; i <= 5 && serialDebug; i++){
+      Serial1.print(" M");
+      Serial1.print(i);
+      Serial1.print(" load: ");      
+      Serial1.print(dxl.readControlTableItem(PRESENT_LOAD, i));
+      Serial1.print(" Temp: ");
+      Serial1.print(dxl.readControlTableItem(PRESENT_TEMPERATURE, 5));
+      Serial1.print(" Angle: ");
+      Serial1.print(dxl.getPresentPosition(i));
+      Serial1.println();
+    }
+
+    for(int i = 1; i <= 5 && serialDebug; i++){
+      if(dxl.readControlTableItem(PRESENT_TEMPERATURE, i) == 0){
+        Serial1.print("ERROR motor: ");
+        Serial1.print(i);
+        Serial1.println("is not connected");
+      }
+    }
+    */
+
   //Serial1.print("Im not supposed to be here.");
 }
 

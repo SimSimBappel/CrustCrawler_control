@@ -168,7 +168,7 @@ void loop() {
   if (Serial.available()) {
     mySerial.write(Serial.read());
   }
-  delay(100);
+  delay(10); //might be able to delete it
 }
 
 int makeBaseline(int sEMG, int curBase){
