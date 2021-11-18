@@ -21,9 +21,11 @@ MPU9250_asukiaaa mySensor;
 float aX, aY, aZ;
 double aX_angle, aY_angle, aZ_angle; 
 
-float aX_filtered[10];
-float aY_filtered[10];
-float aZ_filtered[10];
+const int filterOrder = 2;
+
+float aX_filtered[filterOrder];
+float aY_filtered[filterOrder];
+float aZ_filtered[filterOrder];
 int last = 0;
 
 double aX_show = 0;
@@ -63,22 +65,22 @@ void loop() {
     aY_filtered[last] = aY;
     aZ_filtered[last] = aZ;
 
-    if(last<9){
+    if(last<filterOrder-1){
     last++;  
               }
     else{
     last = 0;  
         }
     }
-    for(int i = 0; i < 10 ; i++){
+    for(int i = 0; i < filterOrder ; i++){
       aX_show += aX_filtered[i];
       aY_show += aY_filtered[i];
       aZ_show += aZ_filtered[i];
     
     }
-    aX_show=aX_show/10;
-    aY_show=aY_show/10;
-    aZ_show=aZ_show/10;
+    aX_show=aX_show/filterOrder;
+    aY_show=aY_show/filterOrder;
+    aZ_show=aZ_show/filterOrder;
 
      
 
@@ -150,11 +152,8 @@ void loop() {
     Serial.print(" , ");
     Serial.println(BaseEMG2);
 
-
-    delay(10);
     while (mySerial.available()) {
     Serial.write(mySerial.read());
-    delay(5);
   }
   if (Serial.available()) {
     mySerial.write(Serial.read());
