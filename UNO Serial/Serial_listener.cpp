@@ -6,6 +6,14 @@
 
 EMG emg;
 
+unsigned long startMillis;
+unsigned long currentMillis;
+const unsigned long period = 2000;
+
+int sign = 2;
+
+bool gripperToggle = false;
+
 SoftwareSerial mySerial(10, 11); // RX, TX
 
 Adafruit_BMP280 bme; // I2C
@@ -33,16 +41,10 @@ void setup() {
   while (!Serial);
   mySerial.begin(57600);
 
+  startMillis = millis();
 
   bme.begin();
   mySensor.beginAccel();
-  //mySensor.beginGyro();
-  //mySensor.beginMag();
-
-  // You can set your own offset for mag values
-  // mySensor.magXOffset = -50;
-  // mySensor.magYOffset = -55;
-  // mySensor.magZOffset = -10;
 }
 
 void loop() {
@@ -52,7 +54,6 @@ void loop() {
     aY = mySensor.accelY();
     aZ = mySensor.accelZ();
     aZ = aZ + 0.43;
-    //aY = aY - 0.11;
 
     //filter 
     aX_filtered[last] = aX;
@@ -83,58 +84,60 @@ void loop() {
     if(aZ_show < 0 && aX_show > 0){
       pitch = - 180 - pitch;
 
-      }
-
-*/
+      }*/
     if(aZ_show < 0){
       roll = 180 - roll;
       }
-/*
-    Serial.print(roll);
-    Serial.print("    ");
-    Serial.println(pitch);
-*/
+
     //conversion to dxl units
     roll = roll / 0.088;
     pitch = pitch /0.088;
 
     sendroll = int(roll);
     sendpitch = int(pitch);
-   /*
-    mySerial.print("<P");
-    mySerial.print(String(sendroll));
-    mySerial.print(",");
-    mySerial.print(String(sendpitch));
-    mySerial.print(">\n");
-*/
+   
+    
+
     emg.GetInput(100);
     int EMG1 = emg.EMG1();
     int EMG2 = emg.EMG2();
 
-    Serial.println(EMG1);
+    Serial.print(EMG1);
     Serial.print("    ");
-    Serial.print(EMG2);
+    Serial.println(EMG2);
     
-    bool gripperToggle = false;
+    currentMillis = millis();
 
-    if( EMG2 > 25 && gripperToggle == false){
+    if( EMG1 > 200 && EMG2 > 50 && gripperToggle == false && currentMillis - startMillis >= period){
       mySerial.print("<GO>");
       gripperToggle = true;
-      delay (2500);
+      startMillis = currentMillis;
       }
-    if(EMG2 > 25 && gripperToggle == true){
+    if(EMG1 > 200 && EMG2 > 50 && gripperToggle == true && currentMillis - startMillis >= period){
       mySerial.print("<GC>");
       gripperToggle = false;
+      startMillis = currentMillis;
       }
-    
 
-/*
-    //Serial.print("<P");
-    Serial.print(int(roll));
-    Serial.print(",");
-    Serial.println(int(pitch));
-    //Serial.print(">\n");
-    */
+    if (EMG1 > 200 && EMG2 < 50){ //J3 positive
+      sign  = 1;
+      }
+     
+      else if (EMG1 < 200 && EMG2 > 50){ //J3 Negative
+      sign  = 0;
+      }
+      else{
+        sign=2;
+        }
+  
+    mySerial.print("<P");
+    mySerial.print(String(sendroll));
+    mySerial.print(",");
+    mySerial.print(String(sendpitch));
+    mySerial.print(",");
+    mySerial.print(String(sign));
+    mySerial.print(">\n");
+
     delay(100);
     while (mySerial.available()) {
     Serial.write(mySerial.read());

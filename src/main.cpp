@@ -143,7 +143,9 @@ void current(void)
 
   DXL_ID = 3; 
   dxl.torqueOff(DXL_ID);
-  dxl.setOperatingMode(DXL_ID, OP_CURRENT); 
+  dxl.setOperatingMode(DXL_ID, OP_POSITION); // Skal sættes til current senere
+  dxl.writeControlTableItem(PROFILE_VELOCITY, DXL_ID, 50);
+  dxl.writeControlTableItem(PROFILE_ACCELERATION, DXL_ID, 20);
   dxl.torqueOn(DXL_ID);
   
 
@@ -176,8 +178,10 @@ void current(void)
     res = k_receive(msgQ2, &msg, 10, &lostMessages);  
 
     //P,roll,pitch
+
+    Serial1.println(msg);
     
-    
+    //M1
     for(int i = 0; i < 7; i++){
       tempMsg[i]= ' ';
     }
@@ -196,13 +200,15 @@ void current(void)
     Serial1.print(tempPos);
     dxl.setGoalPosition(1,tempPos);
 
+    //M2
     for(int i = 0; i < 7; i++){
       tempMsg[i]= ' ';
     }
 
     for(int i = lastKomma; i<13; i++){
       if(msg[i] == ','){
-        break;
+        lastKomma = i+1;
+        i=100;
       }
       else{
         tempMsg[i-lastKomma]= msg[i];
@@ -210,8 +216,40 @@ void current(void)
     }
     tempPos = 1170-atoi(tempMsg);
     Serial1.print("m2: ");  
-    Serial1.println(tempPos);
+    Serial1.print(tempPos);
     dxl.setGoalPosition(2,tempPos);
+
+    //M3
+    for(int i = 0; i < 7; i++){
+      tempMsg[i]= ' ';
+    }
+
+    for(int i = lastKomma; i<14; i++){
+      if(msg[i] == ','){
+        i=100;
+      }
+      else{
+        tempMsg[i-lastKomma]= msg[i];
+
+      }
+    }
+    tempPos = atoi(tempMsg);
+    Serial1.println(tempMsg);
+    Serial1.print("m3: ");
+    if(tempPos == 1){
+      tempPos = dxl.getPresentPosition(3) - 75;
+    }
+
+    else if(tempPos == 0){
+      tempPos = dxl.getPresentPosition(3) + 75;
+    }
+    
+    Serial1.println(tempPos);
+
+    if(tempPos > 780 && tempPos < 2020){
+    dxl.setGoalPosition(3,tempPos);
+    }
+    
 
     k_sleep(100);
   }
