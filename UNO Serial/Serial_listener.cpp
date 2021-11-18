@@ -35,7 +35,9 @@ int sendpitch;
 
 float roll,pitch; // roll == M1, pitch == M2 bacts
 
-int fjollet = 0;
+int BaseEMG1 = 500;
+int BaseEMG2 = 500;
+
 void setup() {
   Serial.begin(115200);
   while (!Serial);
@@ -59,12 +61,13 @@ void loop() {
     aX_filtered[last] = aX;
     aY_filtered[last] = aY;
     aZ_filtered[last] = aZ;
+
     if(last<9){
-      last++;  
-    }
+    last++;  
+              }
     else{
-      last = 0;  
-    }
+    last = 0;  
+        }
     }
     for(int i = 0; i < 10 ; i++){
       aX_show += aX_filtered[i];
@@ -80,11 +83,13 @@ void loop() {
 
     roll = atan(aY_show / sqrt(pow(aX_show, 2) + pow(aZ_show, 2))) * 180 / 3.14;
     pitch = atan(-1 * aX_show / sqrt(pow(aY_show, 2) + pow(aZ_show, 2))) * 180 / 3.14;
-/*
-    if(aZ_show < 0 && aX_show > 0){
+
+      /*
+    if(aZ_show < 0 && aX_show > 0){ // et forsøg på at fixe joint 2's udregninger over vandret, virker ikke tho.
       pitch = - 180 - pitch;
 
       }*/
+
     if(aZ_show < 0){
       roll = 180 - roll;
       }
@@ -95,8 +100,6 @@ void loop() {
 
     sendroll = int(roll);
     sendpitch = int(pitch);
-   
-    
 
     emg.GetInput(100);
     int EMG1 = emg.EMG1();
@@ -108,22 +111,25 @@ void loop() {
     
     currentMillis = millis();
 
-    if( EMG1 > 200 && EMG2 > 50 && gripperToggle == false && currentMillis - startMillis >= period){
+    if( EMG1 > BaseEMG1 && EMG2 > BaseEMG2 && gripperToggle == false && currentMillis - startMillis >= period){ //Opens the gripper
       mySerial.print("<GO>");
       gripperToggle = true;
       startMillis = currentMillis;
       }
-    if(EMG1 > 200 && EMG2 > 50 && gripperToggle == true && currentMillis - startMillis >= period){
+    else BaseEMG1 = makeBaseline(EMG1, BaseEMG1);
+
+    if(EMG1 > BaseEMG1 && EMG2 > BaseEMG2 && gripperToggle == true && currentMillis - startMillis >= period){ //Closes the gripper
       mySerial.print("<GC>");
       gripperToggle = false;
       startMillis = currentMillis;
       }
+    else  BaseEMG2 = makeBaseline(EMG2, BaseEMG2);
 
-    if (EMG1 > 200 && EMG2 < 50){ //J3 positive
+    if (EMG1 > BaseEMG1 && EMG2 < BaseEMG2){ //J3 positive direction
       sign  = 1;
       }
      
-      else if (EMG1 < 200 && EMG2 > 50){ //J3 Negative
+      else if (EMG1 < BaseEMG1 && EMG2 > BaseEMG2){ //J3 Negative direction
       sign  = 0;
       }
       else{
@@ -146,4 +152,11 @@ void loop() {
   if (Serial.available()) {
     mySerial.write(Serial.read());
   }
+}
+
+int makeBaseline(int sEMG, int curBase){
+
+int baseline = 0.1*sEMG + 0.9*curBase;
+
+return baseline;
 }
