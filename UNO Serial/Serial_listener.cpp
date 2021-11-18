@@ -156,7 +156,5 @@ void loop() {
 
 int makeBaseline(int sEMG, int curBase){
 
-int baseline = 0.1*sEMG + 0.9*curBase;
-
-return baseline;
+return 0.1*sEMG + 0.9*curBase;
 }

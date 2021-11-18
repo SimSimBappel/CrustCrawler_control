@@ -1,8 +1,8 @@
 #include <Arduino.h>
 #include <krnl.h>
 #include <DynamixelShield.h>
-#include <PID_v1.h>
 
+//dxl setup
 const float DXL_PROTOCOL_VERSION = 2.0;
 DynamixelShield dxl;
 
@@ -10,27 +10,16 @@ DynamixelShield dxl;
 using namespace ControlTableItem;
 
 struct k_t *pserialHandler, *pcurrent, *pgripper, *pt4;          
-
-
 struct k_msg_t *msgQ, *msgQ2;
-
 char dataBufForMsgQ[100]; 
-
 char dataBufForMsgQ2[100];
-
 struct k_t  *gripSem, *curSem;
-
-
-
-
 
 //find proper stacksize, see void setup comments
 char s1[1000]; 
 char s2[500]; 
 char s3[500];
 char s4[500];
- 
-
 
 void serialHandler(void)
 { 
@@ -143,7 +132,7 @@ void current(void)
 
   DXL_ID = 3; 
   dxl.torqueOff(DXL_ID);
-  dxl.setOperatingMode(DXL_ID, OP_POSITION); // Skal sættes til current senere
+  dxl.setOperatingMode(DXL_ID, OP_POSITION); // Skal sættes til current senere hvis control system skal laves
   dxl.writeControlTableItem(PROFILE_VELOCITY, DXL_ID, 50);
   dxl.writeControlTableItem(PROFILE_ACCELERATION, DXL_ID, 20);
   dxl.torqueOn(DXL_ID);
@@ -391,8 +380,8 @@ void setup(){
 
   //each pt(n) is a pointer to a function t(n), priority, stack size 
   pserialHandler=k_crt_task(serialHandler, 15, 500); 
-  pcurrent=k_crt_task(current, 13, 500);
-  pgripper=k_crt_task(gripper, 1, 3000);
+  pcurrent=k_crt_task(current, 1, 500);
+  pgripper=k_crt_task(gripper, 2, 3000);
   pt4=k_crt_task(t4, 12, 500);
 
 
