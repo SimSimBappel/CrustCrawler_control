@@ -37,6 +37,7 @@ float roll,pitch; // roll == M1, pitch == M2 bacts
 
 int BaseEMG1 = 500;
 int BaseEMG2 = 500;
+const int EMGdev = 5;
 
 void setup() {
   Serial.begin(115200);
@@ -111,31 +112,31 @@ void loop() {
     
     currentMillis = millis();
 
-    if( EMG1 > BaseEMG1 && EMG2 > BaseEMG2 && gripperToggle == false && currentMillis - startMillis >= period){ //Opens the gripper
+    if (EMG1 > BaseEMG1 +EMGdev){ //&& EMG2 < BaseEMG2 + EMGdev//J3 positive direction
+      sign  = 1;
+      }
+     
+   else if (EMG2 > BaseEMG2+ EMGdev){ // EMG1 < BaseEMG1 +EMGdev && //J3 Negative direction
+      sign  = 0;
+      }
+   else{
+        sign=2;
+        }
+
+    if( EMG1 > BaseEMG1 + EMGdev && EMG2 > BaseEMG2 + EMGdev && gripperToggle == false && currentMillis - startMillis >= period){ //Opens the gripper
       mySerial.print("<GO>");
       gripperToggle = true;
       startMillis = currentMillis;
       }
     else BaseEMG1 = makeBaseline(EMG1, BaseEMG1);
 
-    if(EMG1 > BaseEMG1 && EMG2 > BaseEMG2 && gripperToggle == true && currentMillis - startMillis >= period){ //Closes the gripper
+    if(EMG1 > BaseEMG1 + EMGdev && EMG2 > BaseEMG2 + EMGdev && gripperToggle == true && currentMillis - startMillis >= period){ //Closes the gripper
       mySerial.print("<GC>");
       gripperToggle = false;
       startMillis = currentMillis;
       }
     else  BaseEMG2 = makeBaseline(EMG2, BaseEMG2);
 
-    if (EMG1 > BaseEMG1 && EMG2 < BaseEMG2){ //J3 positive direction
-      sign  = 1;
-      }
-     
-      else if (EMG1 < BaseEMG1 && EMG2 > BaseEMG2){ //J3 Negative direction
-      sign  = 0;
-      }
-      else{
-        sign=2;
-        }
-  
     mySerial.print("<P");
     mySerial.print(String(sendroll));
     mySerial.print(",");
@@ -144,7 +145,13 @@ void loop() {
     mySerial.print(String(sign));
     mySerial.print(">\n");
 
-    delay(100);
+    Serial.print("baseline: ");
+    Serial.print(BaseEMG1);
+    Serial.print(" , ");
+    Serial.println(BaseEMG2);
+
+
+    delay(10);
     while (mySerial.available()) {
     Serial.write(mySerial.read());
     delay(5);
@@ -156,5 +163,5 @@ void loop() {
 
 int makeBaseline(int sEMG, int curBase){
 
-return 0.1*sEMG + 0.9*curBase;
+return 0.4*sEMG + 0.6*curBase;
 }
