@@ -54,6 +54,11 @@ void setup() {
 
 void loop() {
 
+  int current2Millis = millis();
+  Serial.print("delay: ");
+  Serial.println(current2Millis-startMillis);
+  startMillis = current2Millis;
+
   if (mySensor.accelUpdate() == 0) {
     aX = mySensor.accelX();
     aY = mySensor.accelY();
@@ -104,21 +109,23 @@ void loop() {
     sendroll = int(roll);
     sendpitch = int(pitch);
 
-    emg.GetInput(100);
+    //main delay issue, delay is 5ms without, 115 with
+    emg.GetInput(1);
     int EMG1 = emg.EMG1();
     int EMG2 = emg.EMG2();
-
+/*
     Serial.print(EMG1);
     Serial.print("    ");
     Serial.println(EMG2);
+    */
     
     currentMillis = millis();
 
-    if (EMG1 > BaseEMG1 +EMGdev){ //&& EMG2 < BaseEMG2 + EMGdev//J3 positive direction
+    if (EMG1 > BaseEMG1 + EMGdev){ //&& EMG2 < BaseEMG2 + EMGdev//J3 positive direction
       sign  = 1;
       }
      
-   else if (EMG2 > BaseEMG2+ EMGdev){ // EMG1 < BaseEMG1 +EMGdev && //J3 Negative direction
+   else if (EMG2 > BaseEMG2 + EMGdev){ // EMG1 < BaseEMG1 +EMGdev && //J3 Negative direction
       sign  = 0;
       }
    else{
@@ -146,11 +153,14 @@ void loop() {
     mySerial.print(",");
     mySerial.print(String(sign));
     mySerial.print(">\n");
+    
 
+/*
     Serial.print("baseline: ");
     Serial.print(BaseEMG1);
     Serial.print(" , ");
     Serial.println(BaseEMG2);
+    */
 
     while (mySerial.available()) {
     Serial.write(mySerial.read());
@@ -158,6 +168,7 @@ void loop() {
   if (Serial.available()) {
     mySerial.write(Serial.read());
   }
+  delay(100);
 }
 
 int makeBaseline(int sEMG, int curBase){

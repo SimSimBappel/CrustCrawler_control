@@ -2,6 +2,9 @@
 #include <krnl.h>
 #include <DynamixelShield.h>
 
+//test
+int startMillis = millis();
+
 //dxl setup
 const float DXL_PROTOCOL_VERSION = 2.0;
 DynamixelShield dxl;
@@ -156,11 +159,17 @@ void current(void)
   int tempPos;
   int lastKomma;
   
+  //gripper fixed code
+  int m4Pos;
+  int m5Pos;
 
   unsigned long prevMillis = 0;
   bool serialDebug = true;
 
   while(1){
+
+    int t4Millis = millis(); //delay tester
+
     k_wait(curSem, 0);
     prevMillis = millis();
 
@@ -171,9 +180,11 @@ void current(void)
     Serial1.println(msg);
     
     //M1
+    
     for(int i = 0; i < 7; i++){
       tempMsg[i]= ' ';
     }
+    
 
     for(int i = 1; i<7; i++){
       if(msg[i] == ','){
@@ -190,9 +201,11 @@ void current(void)
     dxl.setGoalPosition(1,tempPos);
 
     //M2
+    
     for(int i = 0; i < 7; i++){
       tempMsg[i]= ' ';
     }
+    
 
     for(int i = lastKomma; i<13; i++){
       if(msg[i] == ','){
@@ -209,9 +222,11 @@ void current(void)
     dxl.setGoalPosition(2,tempPos);
 
     //M3
+    
     for(int i = 0; i < 7; i++){
       tempMsg[i]= ' ';
     }
+    
 
     for(int i = lastKomma; i<14; i++){
       if(msg[i] == ','){
@@ -239,13 +254,30 @@ void current(void)
     dxl.setGoalPosition(3,tempPos);
     }
     
-
+    //gripper fixed code 2
+    if(dxl.readControlTableItem(PRESENT_LOAD, 4) < -250 && dxl.readControlTableItem(PRESENT_LOAD, 5) > 250){
+      Serial1.println("Gripper Fixed");
+      m4Pos = dxl.getPresentPosition(4);
+      m5Pos = dxl.getPresentPosition(5);
+      dxl.torqueOff(4);
+      dxl.setOperatingMode(4,OP_POSITION);
+      dxl.torqueOn(4);
+      dxl.torqueOff(5);
+      dxl.setOperatingMode(5,OP_POSITION);
+      dxl.torqueOn(5);
+      dxl.setGoalPosition(4, m4Pos);
+      dxl.setGoalPosition(5, m5Pos);
+    }
+    
+    //delay tester
+    Serial1.print("t4 delay: ");
+    Serial1.println(t4Millis-startMillis);   
+    startMillis = t4Millis;  
+    
     k_sleep(100);
   }
   
 }
-
-
 
 void gripper(void){
   char res;
@@ -265,7 +297,6 @@ void gripper(void){
     dxl.torqueOn(5);
 
     res = k_receive(msgQ, &msg, 10, &lostMessages);
-    
     
       if(msg[1] == 'O'){//OPEN
         Serial1.println("gripper open");
@@ -289,19 +320,6 @@ void gripper(void){
         Serial1.println("msg2[1] is not == to c || o");
       }
 
-
-/*
-      for(int i = 11; i<16; i++){
-      tempMsg[i-11] = msg[i];
-    }
-    tempCurrent = atoi(tempMsg);
-
-    if(serialDebug){
-      Serial1.print("tempMsg: ");make work plz
-      Serial1.println(tempMsg);
-    }
-    dxl.setGoalCurrent(3, tempCurrent);*/
-
     k_sleep(100);
   }
 }
@@ -309,13 +327,11 @@ void gripper(void){
 
 
 void t4(void){
+  
   bool serialDebug = false;
-  int m4Pos;
-  int m5Pos;
   while(1){
     //Serial spammer
-    
-      
+   
     for(int i = 1; i <= 5 && serialDebug; i++){
       Serial1.print(" M");
       Serial1.print(i);
@@ -334,28 +350,12 @@ void t4(void){
         Serial1.print(i);
         Serial1.println("is not connected");
       }
-    }
-    if(dxl.readControlTableItem(PRESENT_LOAD, 4) < -250 && dxl.readControlTableItem(PRESENT_LOAD, 5) > 250){
-      Serial1.println("Gripper Fixed");
-      m4Pos = dxl.getPresentPosition(4);
-      m5Pos = dxl.getPresentPosition(5);
-      dxl.torqueOff(4);
-      dxl.setOperatingMode(4,OP_POSITION);
-      dxl.torqueOn(4);
-      dxl.torqueOff(5);
-      dxl.setOperatingMode(5,OP_POSITION);
-      dxl.torqueOn(5);
-      dxl.setGoalPosition(4, m4Pos);
-      dxl.setGoalPosition(5, m5Pos);
-    }
-
-
-    k_sleep(100);
-  }          
+    }  
 }
 
-
-
+    k_sleep(100);
+  }  
+  
 void setup(){
   
   //Serial definition--
@@ -379,7 +379,7 @@ void setup(){
   msgQ2 = k_crt_send_Q (1, sizeof(char[20]),  dataBufForMsgQ2); 
 
   //each pt(n) is a pointer to a function t(n), priority, stack size 
-  pserialHandler=k_crt_task(serialHandler, 15, 500); 
+  pserialHandler=k_crt_task(serialHandler, 3, 500); 
   pcurrent=k_crt_task(current, 1, 500);
   pgripper=k_crt_task(gripper, 2, 3000);
   pt4=k_crt_task(t4, 12, 500);
