@@ -113,8 +113,8 @@ void serialHandler(void)
     }
 
     //delay tester
-    Serial1.print("t4 delay: ");
-    Serial1.println(t4Millis-startMillis);   
+    //Serial1.print("t4 delay: ");
+    //Serial1.println(t4Millis-startMillis);   
     startMillis = t4Millis;  
 
     k_sleep(10);
