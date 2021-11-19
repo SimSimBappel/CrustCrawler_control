@@ -39,7 +39,7 @@ float roll,pitch; // roll == M1, pitch == M2 bacts
 
 int BaseEMG1 = 1000;
 int BaseEMG2 = 1000;
-const int EMGdev = 5;
+const int EMGdev = 25;
 
 void setup() {
   Serial.begin(115200);
@@ -113,7 +113,7 @@ void loop() {
     emg.GetInput(1);
     int EMG1 = emg.EMG1();
     int EMG2 = emg.EMG2();
-
+    Serial.print("EMG Signals: ");
     Serial.print(EMG1);
     Serial.print("    ");
     Serial.println(EMG2);
@@ -164,7 +164,7 @@ void loop() {
       sign  = 1;
       BaseEMG2 = makeBaseline(EMG2, BaseEMG2);
       }
-    else if (EMG2 > BaseEMG2 + EMGdev){ //J3 negative direction
+    else if (EMG2 > BaseEMG2 + 0.5*EMGdev){ //J3 negative direction
       sign  = 0;
       BaseEMG1 = makeBaseline(EMG1, BaseEMG1);
       }
