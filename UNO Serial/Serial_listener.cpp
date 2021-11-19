@@ -119,33 +119,6 @@ void loop() {
     Serial.println(EMG2);
     
     
-   
-  /*
-    if (EMG1 > BaseEMG1 + EMGdev){ //&& EMG2 < BaseEMG2 + EMGdev//J3 positive direction
-      sign  = 1;
-      }
-     
-   else if (EMG2 > BaseEMG2 + EMGdev){ // EMG1 < BaseEMG1 +EMGdev && //J3 Negative direction
-      sign  = 0;
-      }
-   else{
-        sign=2;
-        }
-
-    if( EMG1 > BaseEMG1 + EMGdev && EMG2 > BaseEMG2 + EMGdev && gripperToggle == false && currentMillis - startMillis >= period){ //Opens the gripper
-      mySerial.print("<GO>");
-      gripperToggle = true;
-      startMillis = currentMillis;
-      }
-    else BaseEMG1 = makeBaseline(EMG1, BaseEMG1);
-
-    if(EMG1 > BaseEMG1 + EMGdev && EMG2 > BaseEMG2 + EMGdev && gripperToggle == true && currentMillis - startMillis >= period){ //Closes the gripper
-      mySerial.print("<GC>");
-      gripperToggle = false;
-      startMillis = currentMillis;
-      }
-    else  BaseEMG2 = makeBaseline(EMG2, BaseEMG2);
-    */
     currentMillis = millis();
     if( EMG1 > BaseEMG1 + 2*EMGdev && EMG2 > BaseEMG2 + EMGdev){ //Opens the gripper && 
       if(gripperOpen == false && currentMillis - startMillis >= period){
