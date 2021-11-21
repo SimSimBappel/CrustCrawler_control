@@ -46,19 +46,21 @@ void setup() {
   while (!Serial);
   mySerial.begin(57600);
 
-  startMillis = millis();
+  //startMillis = millis();
 
   bme.begin();
   mySensor.beginAccel();
 }
 
 void loop() {
+  
   /*
   int current2Millis = millis();
   Serial.print("delay: ");
   Serial.println(current2Millis-startMillis);
   startMillis = current2Millis;
   */
+  
   if (mySensor.accelUpdate() == 0) {
     aX = mySensor.accelX();
     aY = mySensor.accelY();
@@ -81,26 +83,26 @@ void loop() {
       aX_show += aX_filtered[i];
       aY_show += aY_filtered[i];
       aZ_show += aZ_filtered[i];
-    
     }
+    
     aX_show=aX_show/filterOrder;
     aY_show=aY_show/filterOrder;
     aZ_show=aZ_show/filterOrder;
 
-     
-
     roll = atan(aY_show / sqrt(pow(aX_show, 2) + pow(aZ_show, 2))) * 180 / 3.14;
     pitch = atan(-1 * aX_show / sqrt(pow(aY_show, 2) + pow(aZ_show, 2))) * 180 / 3.14;
 
-      /*
-    if(aZ_show < 0 && aX_show > 0){ // et forsøg på at fixe joint 2's udregninger over vandret, virker ikke tho.
-      pitch = - 180 - pitch;
 
+    if( aZ_show < 0 && aY_show < 0){
+       pitch = -180-pitch;
+    }
+    /*else if (aZ_show < 0){
+      pitch = -180-pitch; 
       }*/
-
-    if(aZ_show < 0){
-      roll = 180 - roll;
+    else if( aZ_show < 0 && aY_show > 0){
+      // probably nothing
       }
+    
 
     //conversion to dxl units
     roll = roll / 0.088;
@@ -113,11 +115,13 @@ void loop() {
     emg.GetInput(1);
     int EMG1 = emg.EMG1();
     int EMG2 = emg.EMG2();
+
+    /*
     Serial.print("EMG Signals: ");
     Serial.print(EMG1);
     Serial.print("    ");
     Serial.println(EMG2);
-    
+    */
     
     currentMillis = millis();
     if( EMG1 > BaseEMG1 + 2*EMGdev && EMG2 > BaseEMG2 + EMGdev){ //Opens the gripper && 
@@ -131,7 +135,7 @@ void loop() {
       gripperOpen = false;
       startMillis = currentMillis;
       } 
-      }
+     }
 
     else if (EMG1 > BaseEMG1 + 2*EMGdev){ //J3 positive direction
       sign  = 1;
@@ -156,13 +160,13 @@ void loop() {
     mySerial.print(String(sign));
     mySerial.print(">\n");
     
-
     
+    /*
     Serial.print("baseline: ");
     Serial.print(BaseEMG1);
     Serial.print(" , ");
     Serial.println(BaseEMG2);
-    
+    */
 
     while (mySerial.available()) {
     Serial.write(mySerial.read());
