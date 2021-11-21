@@ -3,7 +3,7 @@
 #include <math.h>
 #include <SoftwareSerial.h>
 #include <EMG.h>
-
+//
 EMG emg;
 
 unsigned long startMillis;
