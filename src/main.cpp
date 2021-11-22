@@ -141,9 +141,9 @@ void current(void)
 
   DXL_ID = 3; 
   dxl.torqueOff(DXL_ID);
-  dxl.setOperatingMode(DXL_ID, OP_POSITION); // Skal sættes til current senere hvis control system skal laves
-  dxl.writeControlTableItem(PROFILE_VELOCITY, DXL_ID, 50);
-  dxl.writeControlTableItem(PROFILE_ACCELERATION, DXL_ID, 10);
+  dxl.setOperatingMode(DXL_ID, OP_CURRENT); // Skal sættes til current senere hvis control system skal laves
+  //dxl.writeControlTableItem(PROFILE_VELOCITY, DXL_ID, 50);
+  //dxl.writeControlTableItem(PROFILE_ACCELERATION, DXL_ID, 10);
   dxl.torqueOn(DXL_ID);
   
 
@@ -234,29 +234,20 @@ void current(void)
 
     for(int i = lastKomma; i<14; i++){
       if(msg[i] == ','){
-        i=100;
+        i=100; // end reading of message
       }
       else{
         tempMsg[i-lastKomma]= msg[i];
 
       }
     }
-    tempPos = atoi(tempMsg);
-    Serial1.println(tempMsg);
+
+    tempPos = atof(tempMsg); //tempPos could be renamed to tempCurrent
+    //Serial1.println(tempMsg);
     Serial1.print("m3: ");
-    if(tempPos == 1){
-      tempPos = dxl.getPresentPosition(3) - 75;
-    }
-
-    else if(tempPos == 0){
-      tempPos = dxl.getPresentPosition(3) + 75;
-    }
-    
     Serial1.println(tempPos);
-
-    if(tempPos > 780 && tempPos < 2020){
-    dxl.setGoalPosition(3,tempPos);
-    }
+    dxl.setGoalCurrent(3,tempPos);
+    
     
     //gripper fixed code 2
     if(dxl.readControlTableItem(PRESENT_LOAD, 4) < -250 && dxl.readControlTableItem(PRESENT_LOAD, 5) > 250){
