@@ -42,13 +42,6 @@ int BaseEMG1 = 1000;
 int BaseEMG2 = 1000;
 const int EMGdev = 25;
 
-int J3goalPose = 2020;
-float tau3 = 0;
-float goalcurrent = 0;
-const float m3 = 0.306; // kg 
-const float [3] I3 = {11.4, 4.5, 162.7};
-
-
 void setup() {
   Serial.begin(115200);
   while (!Serial);
@@ -97,12 +90,12 @@ void loop() {
     aY_show=aY_show/filterOrder;
     aZ_show=aZ_show/filterOrder;
 
-    theta1 = atan(aY_show / sqrt(pow(aX_show, 2) + pow(aZ_show, 2))) * 180 / 3.14;
-    theta2 = atan(-1 * aX_show / sqrt(pow(aY_show, 2) + pow(aZ_show, 2))) * 180 / 3.14;
+    roll = atan(aY_show / sqrt(pow(aX_show, 2) + pow(aZ_show, 2))) * 180 / 3.14;
+    pitch = atan(-1 * aX_show / sqrt(pow(aY_show, 2) + pow(aZ_show, 2))) * 180 / 3.14;
 
 
     if( aZ_show < 0 && aY_show < 0){
-       theta2 = -180-pitch;
+       pitch = -180-pitch;
     }
     /*else if (aZ_show < 0){
       pitch = -180-pitch; 
@@ -113,8 +106,8 @@ void loop() {
     
 
     //conversion to dxl units
-    roll = theta1 / 0.088;
-    pitch = theta2 /0.088;
+    roll = roll / 0.088;
+    pitch = pitch /0.088;
 
     sendroll = int(roll);
     sendpitch = int(pitch);
@@ -146,22 +139,19 @@ void loop() {
      }
 
     else if (EMG1 > BaseEMG1 + 2*EMGdev){ //J3 positive direction
-      J3goalPose =+ 75;
+      sign = 1;
       BaseEMG2 = makeBaseline(EMG2, BaseEMG2);
       }
     else if (EMG2 > BaseEMG2 + 0.5*EMGdev){ //J3 negative direction
-      J3goalPose =- 75;
+      sign = 0;
       BaseEMG1 = makeBaseline(EMG1, BaseEMG1);
       }
     else{
+      sign = 2;
         BaseEMG1 = makeBaseline(EMG1, BaseEMG1);  
         BaseEMG2 = makeBaseline(EMG2, BaseEMG2);
         }
     
-        
-    float gcrossSc3 = -(1963*(sin(theta1)*sin(theta3) - cos(theta1)*cos(theta3)*sin(theta2))*((33*cos(theta3))/250 + 2279/10000))/200 - (1963*cos(theta1)*cos(theta2)((33*sin(theta3))/250 + 113/20))/200
-    tau3 = angACC*I3[1]+angACC*I3[2]+angACC*I3[3]+m3*gcrossSc3;
-
     mySerial.print("<P");
     mySerial.print(String(sendroll));
     mySerial.print(",");
