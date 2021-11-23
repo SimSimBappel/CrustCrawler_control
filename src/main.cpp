@@ -164,7 +164,14 @@ void current(void)
   char tempMsg[7];
   int tempPos;
   int lastKomma;
-  
+
+  float m3 = 0.306;
+  float theta1;
+  float theta2;
+  float theta3;
+  float goalcurrent;
+  int J3Pose;
+  float Torque_g;
   //gripper fixed code
   int m4Pos;
   int m5Pos;
@@ -203,6 +210,7 @@ void current(void)
     Serial1.print("m1: ");  
     Serial1.print(tempPos);
     dxl.setGoalPosition(1,tempPos);
+    theta1 = (-tempPos+2700)*0.088;
 
     //M2
     
@@ -224,6 +232,7 @@ void current(void)
     Serial1.print("m2: ");  
     Serial1.print(tempPos);
     dxl.setGoalPosition(2,tempPos);
+    theta2 = (-tempPos+1170)*0.088;
 
     //M3
     
@@ -242,11 +251,18 @@ void current(void)
       }
     }
 
-    tempPos = atof(tempMsg); //tempPos could be renamed to tempCurrent
-    //Serial1.println(tempMsg);
+    tempPos = atoi(tempMsg); //tempPos could be renamed to tempCurrent
+    J3Pose = dxl.getCurPosition(3);
+    if (tempPos == 1) 
+      tempPos = J3Pose + 75;
+    if (tempPos == 0) 
+      tempPos = J3Pose - 75;
+
     Serial1.print("m3: ");
-    Serial1.println(tempPos);
-    dxl.setGoalCurrent(3,tempPos);
+    theta3 = (-J3Pose+2020)*0.088; 
+    Torque_g = m3*((1.2956*cos(theta1)*sin(theta3)) - (1.2956*cos(theta2)*cos(theta3)*sin(theta1)));
+    goalcurrent = 0.875*Torque_g + 0.25375;
+    dxl.setGoalCurrent(3,goalcurrent,UNIT_MILLI_AMPERE);
     
     
     //gripper fixed code 2
