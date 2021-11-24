@@ -314,7 +314,7 @@ void current(void)
     */
 
     //gripper fixed code 2
-    if(dxl.readControlTableItem(PRESENT_LOAD, 4) < -250 && dxl.readControlTableItem(PRESENT_LOAD, 5) > 250){
+    if(dxl.readControlTableItem(PRESENT_LOAD, 4) < -300 && dxl.readControlTableItem(PRESENT_LOAD, 5) > 300){
       Serial1.println("Gripper Fixed");
       m4Pos = dxl.getPresentPosition(4);
       m5Pos = dxl.getPresentPosition(5);
