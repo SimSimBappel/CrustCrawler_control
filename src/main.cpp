@@ -1,7 +1,8 @@
 #include <Arduino.h>
 #include <krnl.h>
 #include <DynamixelShield.h>
-//
+#include <math.h>
+
 //test
 int startMillis = millis();
 
@@ -142,8 +143,8 @@ void current(void)
   DXL_ID = 3; 
   dxl.torqueOff(DXL_ID);
   dxl.setOperatingMode(DXL_ID, OP_CURRENT); // Skal sættes til current senere hvis control system skal laves
-  //dxl.writeControlTableItem(PROFILE_VELOCITY, DXL_ID, 50);
-  //dxl.writeControlTableItem(PROFILE_ACCELERATION, DXL_ID, 10);
+  dxl.writeControlTableItem(PROFILE_VELOCITY, DXL_ID, 50);
+  dxl.writeControlTableItem(PROFILE_ACCELERATION, DXL_ID, 10);
   dxl.torqueOn(DXL_ID);
   
 
@@ -172,6 +173,9 @@ void current(void)
   float goalcurrent;
   int J3Pose;
   float Torque_g;
+  float Torque_cs;
+  float CurrentKick = 3.6;
+  bool in_movement = false;
   //gripper fixed code
   int m4Pos;
   int m5Pos;
@@ -206,7 +210,7 @@ void current(void)
         tempMsg[i-1]= msg[i];
       }
     }
-    tempPos = 2700-atoi(tempMsg);
+    tempPos = 2700;//-atoi(tempMsg);
     Serial1.print("m1: ");  
     Serial1.print(tempPos);
     dxl.setGoalPosition(1,tempPos);
@@ -228,7 +232,7 @@ void current(void)
         tempMsg[i-lastKomma]= msg[i];
       }
     }
-    tempPos = 1170-atoi(tempMsg);
+    tempPos = 1170;//-atoi(tempMsg);
     Serial1.print("m2: ");  
     Serial1.print(tempPos);
     dxl.setGoalPosition(2,tempPos);
@@ -247,24 +251,54 @@ void current(void)
       }
       else{
         tempMsg[i-lastKomma]= msg[i];
-
       }
     }
 
     tempPos = atoi(tempMsg); //tempPos could be renamed to tempCurrent
     J3Pose = dxl.getCurPosition(3);
+
+   
     if (tempPos == 1) 
       tempPos = J3Pose + 75;
+
     if (tempPos == 0) 
       tempPos = J3Pose - 75;
 
-    Serial1.print("m3: ");
+    //Serial1.print("m3: ");
     theta3 = (-J3Pose+2020)*0.088; 
-    Torque_g = m3*((1.2956*cos(theta1)*sin(theta3)) - (1.2956*cos(theta2)*cos(theta3)*sin(theta1)));
-    goalcurrent = 0.875*Torque_g + 0.25375;
-    dxl.setGoalCurrent(3,goalcurrent,UNIT_MILLI_AMPERE);
+    float error = (tempPos-J3Pose);
+
+    if (abs(error) < 5){
+      in_movement = false;}
+
+    else {
+      CurrentKick = 0;
+      in_movement = true;
+    }
+
+    Torque_cs = (tempPos-J3Pose)*1; // Kp
+     
+    Torque_g = m3*((1.2956*cos(theta1*PI/180)*sin(theta3*PI/180)) - ((1.2956*cos(theta2*PI/180))*cos(theta3*PI/180))*sin(theta1*PI/180));
     
-    
+    if (Torque_g+Torque_cs < 0){
+    goalcurrent = 0.875*Torque_g - 0.25375 - CurrentKick;}
+    else {
+    goalcurrent = 0.875*Torque_g + 0.25375 + CurrentKick;}
+
+    dxl.setGoalCurrent(3,goalcurrent);
+    Serial1.print("Goal current");
+    Serial1.println(goalcurrent);
+
+
+    /*
+   GP 
+   PP
+   Current
+
+
+
+    */
+
     //gripper fixed code 2
     if(dxl.readControlTableItem(PRESENT_LOAD, 4) < -250 && dxl.readControlTableItem(PRESENT_LOAD, 5) > 250){
       Serial1.println("Gripper Fixed");
