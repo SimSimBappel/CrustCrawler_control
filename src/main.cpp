@@ -171,9 +171,11 @@ void current(void)
   float theta2;
   float theta3;
   float goalcurrent;
+  int goalPose = 2020;
   int J3Pose;
   float Torque_g;
   float Torque_cs;
+  int errorInt;
   float CurrentKick = 3.6;
   bool in_movement = false;
   //gripper fixed code
@@ -210,12 +212,12 @@ void current(void)
         tempMsg[i-1]= msg[i];
       }
     }
-    tempPos = 2700;//-atoi(tempMsg);
-    Serial1.print("m1: ");  
-    Serial1.print(tempPos);
+    tempPos = 2700-atoi(tempMsg);
+    //Serial1.print("m1: ");  
+    //Serial1.print(tempPos);
     dxl.setGoalPosition(1,tempPos);
     theta1 = (-tempPos+2700)*0.088;
-
+    Serial1.print(theta1);
     //M2
     
     for(int i = 0; i < 7; i++){
@@ -232,11 +234,12 @@ void current(void)
         tempMsg[i-lastKomma]= msg[i];
       }
     }
-    tempPos = 1170;//-atoi(tempMsg);
-    Serial1.print("m2: ");  
-    Serial1.print(tempPos);
+    tempPos = 1170-atoi(tempMsg);
+    //Serial1.print("m2: ");  
+    //Serial1.print(tempPos);
     dxl.setGoalPosition(2,tempPos);
-    theta2 = (-tempPos+1170)*0.088;
+    theta2 = (tempPos-1170)*0.088;
+    
 
     //M3
     
@@ -259,31 +262,42 @@ void current(void)
 
    
     if (tempPos == 1) 
-      tempPos = J3Pose + 75;
+      goalPose = goalPose + 5;
 
     if (tempPos == 0) 
-      tempPos = J3Pose - 75;
+      goalPose = goalPose - 5;
 
-    //Serial1.print("m3: ");
+    
     theta3 = (-J3Pose+2020)*0.088; 
-    float error = (tempPos-J3Pose);
-
-    if (abs(error) < 5){
+    /*
+    if (abs((tempPos-J3Pose)) < 1){
       in_movement = false;}
 
     else {
       CurrentKick = 0;
       in_movement = true;
     }
-
-    Torque_cs = (tempPos-J3Pose)*1; // Kp
-     
+    */
+    Serial1.print("Goal:");
+    Serial1.print(goalPose);
+    Serial1.print("  Error:");
+    Serial1.println(goalPose-J3Pose);
+   /*
+    Serial1.print("thetas");
+    Serial1.print(theta1);
+    Serial1.print("   ");
+    Serial1.print(theta2);
+    Serial1.print("    ");
+    Serial1.println(theta3);
+    */
+   errorInt = errorInt + (goalPose-J3Pose)-1;
+    Torque_cs = (goalPose-J3Pose)*0.3+0.05*errorInt; // Kp
     Torque_g = m3*((1.2956*cos(theta1*PI/180)*sin(theta3*PI/180)) - ((1.2956*cos(theta2*PI/180))*cos(theta3*PI/180))*sin(theta1*PI/180));
     
     if (Torque_g+Torque_cs < 0){
-    goalcurrent = 0.875*Torque_g - 0.25375 - CurrentKick;}
+    goalcurrent = 0.875*(Torque_g+Torque_cs) - 0.25375;}  //- CurrentKick
     else {
-    goalcurrent = 0.875*Torque_g + 0.25375 + CurrentKick;}
+    goalcurrent = 0.875*(Torque_g+Torque_cs) + 0.25375;} //  + CurrentKick
 
     dxl.setGoalCurrent(3,goalcurrent);
     Serial1.print("Goal current");
