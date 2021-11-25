@@ -177,6 +177,7 @@ void current(void)
   float Torque_cs;
   int errorInt;
   float CurrentKick = 3.6;
+  float oldPose;
   bool in_movement = false;
   //gripper fixed code
   int m4Pos;
@@ -213,8 +214,8 @@ void current(void)
       }
     }
     tempPos = 2700-atoi(tempMsg);
-    //Serial1.print("m1: ");  
-    //Serial1.print(tempPos);
+    Serial1.print("m1: ");  
+    Serial1.print(tempPos);
     dxl.setGoalPosition(1,tempPos);
     theta1 = (-tempPos+2700)*0.088;
     Serial1.print(theta1);
@@ -235,8 +236,8 @@ void current(void)
       }
     }
     tempPos = 1170-atoi(tempMsg);
-    //Serial1.print("m2: ");  
-    //Serial1.print(tempPos);
+    Serial1.print("m2: ");  
+    Serial1.print(tempPos);
     dxl.setGoalPosition(2,tempPos);
     theta2 = (tempPos-1170)*0.088;
     
@@ -282,6 +283,7 @@ void current(void)
     Serial1.print(goalPose);
     Serial1.print("  Error:");
     Serial1.println(goalPose-J3Pose);
+   
    /*
     Serial1.print("thetas");
     Serial1.print(theta1);
@@ -291,8 +293,8 @@ void current(void)
     Serial1.println(theta3);
     */
    errorInt = errorInt + (goalPose-J3Pose)-1;
-    Torque_cs = (goalPose-J3Pose)*0.3+0.05*errorInt; // Kp
-    Torque_g = m3*((1.2956*cos(theta1*PI/180)*sin(theta3*PI/180)) - ((1.2956*cos(theta2*PI/180))*cos(theta3*PI/180))*sin(theta1*PI/180));
+   Torque_cs = 0.1*(goalPose-J3Pose)+0.1*errorInt-0.1*(oldPose-J3Pose); // Kp and ki and kd
+   Torque_g = m3*((1.2956*cos(theta1*PI/180)*sin(theta3*PI/180)) - ((1.2956*cos(theta2*PI/180))*cos(theta3*PI/180))*sin(theta1*PI/180));
     
     if (Torque_g+Torque_cs < 0){
     goalcurrent = 0.875*(Torque_g+Torque_cs) - 0.25375;}  //- CurrentKick
@@ -302,7 +304,7 @@ void current(void)
     dxl.setGoalCurrent(3,goalcurrent);
     Serial1.print("Goal current");
     Serial1.println(goalcurrent);
-
+    oldPose = J3Pose;
 
     /*
    GP 
