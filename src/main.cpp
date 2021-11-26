@@ -131,14 +131,14 @@ void current(void)
   dxl.setOperatingMode(DXL_ID, OP_POSITION); 
   dxl.writeControlTableItem(PROFILE_VELOCITY, DXL_ID, 200);
   dxl.writeControlTableItem(PROFILE_ACCELERATION, DXL_ID, 20);
-  dxl.torqueOn(DXL_ID);
+  //dxl.torqueOn(DXL_ID);
   
   DXL_ID = 2;
   dxl.torqueOff(DXL_ID);
   dxl.setOperatingMode(DXL_ID, OP_POSITION);
   dxl.writeControlTableItem(PROFILE_VELOCITY, DXL_ID, 200);
   dxl.writeControlTableItem(PROFILE_ACCELERATION, DXL_ID, 20);
-  dxl.torqueOn(DXL_ID);
+  //dxl.torqueOn(DXL_ID);
   
 
   DXL_ID = 3; 
@@ -146,19 +146,19 @@ void current(void)
   dxl.setOperatingMode(DXL_ID, OP_CURRENT); // Skal sættes til current senere hvis control system skal laves
   dxl.writeControlTableItem(PROFILE_VELOCITY, DXL_ID, 50);
   dxl.writeControlTableItem(PROFILE_ACCELERATION, DXL_ID, 10);
-  dxl.torqueOn(DXL_ID);
+  //dxl.torqueOn(DXL_ID);
   
 
   DXL_ID = 4;
   dxl.torqueOff(DXL_ID);
   dxl.setOperatingMode(DXL_ID, OP_PWM); 
-  dxl.torqueOn(DXL_ID);
+  //dxl.torqueOn(DXL_ID);
 
   
   DXL_ID = 5;
   dxl.torqueOff(DXL_ID);
   dxl.setOperatingMode(DXL_ID, OP_PWM); 
-  dxl.torqueOn(DXL_ID);
+  //dxl.torqueOn(DXL_ID);
 
   char res;
   int lostMessages;
@@ -221,7 +221,7 @@ void current(void)
     //Serial1.print("m1: ");  
     //Serial1.print(tempPos);
     dxl.setGoalPosition(1,tempPos);
-    theta1 = (-tempPos+2700)*0.088;
+    theta1 = (-dxl.getCurPosition(1)+2700)*0.088;
     //Serial1.print(theta1);
     //M2
     
@@ -243,7 +243,7 @@ void current(void)
     //Serial1.print("m2: ");  
     //Serial1.print(tempPos);s
     dxl.setGoalPosition(2,tempPos);
-    theta2 = (tempPos-1170)*0.088;
+    theta2 = (dxl.getCurPosition(2)-1038)*0.088;
     
 
     //M3
@@ -281,17 +281,13 @@ void current(void)
     Serial1.print("  Error:");
     Serial1.println(goalPose-J3Pose);
    */
-   /*
+   
     Serial1.print("thetas");
     Serial1.print(theta1);
     Serial1.print("   ");
     Serial1.print(theta2);
     Serial1.print("    ");
-    Serial1.println(theta3);
-    */
-   // Rotary encoder
-   
-   
+    Serial1.println(theta3);   
   
    Torque_cs = 0.00025*(J3Pose-goalPose);//controller.PIDController_Update(controller, goalPose,J3Pose);
    
@@ -304,7 +300,7 @@ void current(void)
     goalcurrent = 0.875*(Torque_g+Torque_cs) ;} //  + CurrentKick + 0.25375*/
    Torque_g = 1000*0.875*Torque_g; 
    Torque_cs = -1000*0.875*Torque_cs;
-
+  /*
    Serial1.print("Torque_cs: ");
    Serial1.println(Torque_cs);
    Serial1.print("Torque_g: ");
@@ -314,8 +310,7 @@ void current(void)
     dxl.setGoalCurrent(3,goalcurrent,UNIT_MILLI_AMPERE);
     Serial1.print("Goal current");
     Serial1.println(goalcurrent);
-    oldPose = J3Pose;
-
+  */
     /*
    GP 
    PP
@@ -329,10 +324,10 @@ void current(void)
       m5Pos = dxl.getPresentPosition(5);
       dxl.torqueOff(4);
       dxl.setOperatingMode(4,OP_POSITION);
-      dxl.torqueOn(4);
+      //dxl.torqueOn(4);
       dxl.torqueOff(5);
       dxl.setOperatingMode(5,OP_POSITION);
-      dxl.torqueOn(5);
+     // dxl.torqueOn(5);
       dxl.setGoalPosition(4, m4Pos);
       dxl.setGoalPosition(5, m5Pos);
     }
