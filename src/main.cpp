@@ -2,6 +2,7 @@
 #include <krnl.h>
 #include <DynamixelShield.h>
 #include <math.h>
+#include "PID.h"
 
 //test
 int startMillis = millis();
@@ -186,6 +187,9 @@ void current(void)
   unsigned long prevMillis = 0;
   bool serialDebug = true;
 
+  PID controller;
+  controller.Controller_Init(controller, 0.1 , 0.1, 0.1);
+
   while(1){
 
     k_wait(curSem, 0);
@@ -260,24 +264,16 @@ void current(void)
 
     tempPos = atoi(tempMsg); //tempPos could be renamed to tempCurrent
     J3Pose = dxl.getCurPosition(3);
-   /*
+   
     if (tempPos == 1) 
       goalPose = goalPose + 5;
 
     if (tempPos == 0) 
       goalPose = goalPose - 5;
-    */
+    
     
     theta3 = (-J3Pose+2020)*0.088; 
-    /*
-    if (abs((tempPos-J3Pose)) < 1){
-      in_movement = false;}
-
-    else {
-      CurrentKick = 0;
-      in_movement = true;
-    }
-    */
+    
    /*
     Serial1.print("Goal:");
     Serial1.print(goalPose);
@@ -296,8 +292,9 @@ void current(void)
     */
    // Rotary encoder
    
+   
    errorInt = errorInt + (goalPose-J3Pose)-1;
-   Torque_cs = 0;//0.1*(goalPose-J3Pose)+0.1*errorInt-0.1*(oldPose-J3Pose); // Kp and ki and kd
+   Torque_cs = controller.PIDController_Update(controller, goalPose,J3Pose);
    float gconst = 0.45; // 1.2956;
    Torque_g = m3*((gconst*cos(theta1*PI/180)*sin(theta3*PI/180)) - ((gconst*cos(theta2*PI/180))*cos(theta3*PI/180))*sin(theta1*PI/180));
     
