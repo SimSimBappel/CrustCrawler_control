@@ -41,13 +41,14 @@ public:
 
 	pid.differentiator  = 0.0;
 	pid.prevMeasurement = 0.0;
+    pid.tau = 4;
 
 };
     float PIDController_Update(PID &pid, float reference, float measurement){
     
     float error = reference - measurement; // Error signal
     float prop = pid.Kp * error; //Proportional contribution
-
+    
     float integrator = pid.integrator + 0.5 * pid.Ki * pid.T * (error + pid.prevError); //Integral contribution
 
 	// Static integrator Limits 
@@ -70,19 +71,24 @@ public:
 	// Compute output and apply limits
 	
     float output = prop + integrator + differentiator;
-
+    /*
     if (output > pid.limMax) {
         output = pid.limMax;
     } 
     else if (output < pid.limMin) {
         output = pid.limMin;
     }
-
+    */
 	// Store error and measurement for later use 
     pid.prevError       = error;
     pid.prevMeasurement = measurement;
     pid.prevDerivative = differentiator;
-
+    /*Serial1.println("prop: ");
+    Serial1.println(prop);
+    Serial1.println("integrator :" );
+    Serial1.println(integrator);
+    Serial1.println("differentiator:");
+    Serial1.println(differentiator);*/
 	// Returns Output
     return output;
 }; };

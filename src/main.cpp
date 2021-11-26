@@ -167,7 +167,7 @@ void current(void)
   int tempPos;
   int lastKomma;
 
-  float m3 = 0.306;
+  float m3 = 0.306; // weight of 3rd link in kg
   float theta1;
   float theta2;
   float theta3;
@@ -188,7 +188,7 @@ void current(void)
   bool serialDebug = true;
 
   PID controller;
-  controller.Controller_Init(controller, 0.1 , 0.1, 0.1);
+  controller.Controller_Init(controller, 0.5 , 0.0, 0.0);
 
   while(1){
 
@@ -264,14 +264,13 @@ void current(void)
 
     tempPos = atoi(tempMsg); //tempPos could be renamed to tempCurrent
     J3Pose = dxl.getCurPosition(3);
-   
+   /*
     if (tempPos == 1) 
       goalPose = goalPose + 5;
-
     if (tempPos == 0) 
       goalPose = goalPose - 5;
-    
-    
+    */
+    goalPose = 1500;
     theta3 = (-J3Pose+2020)*0.088; 
     
    /*
@@ -293,17 +292,26 @@ void current(void)
    // Rotary encoder
    
    
-   errorInt = errorInt + (goalPose-J3Pose)-1;
-   Torque_cs = controller.PIDController_Update(controller, goalPose,J3Pose);
+  
+   Torque_cs = 0.00025*(J3Pose-goalPose);//controller.PIDController_Update(controller, goalPose,J3Pose);
+   
    float gconst = 0.45; // 1.2956;
    Torque_g = m3*((gconst*cos(theta1*PI/180)*sin(theta3*PI/180)) - ((gconst*cos(theta2*PI/180))*cos(theta3*PI/180))*sin(theta1*PI/180));
-    
+    /*
     if (Torque_g+Torque_cs < 0){
     goalcurrent = 0.875*(Torque_g+Torque_cs) ;}  //- CurrentKick - 0.25375
     else {
-    goalcurrent = 0.875*(Torque_g+Torque_cs) ;} //  + CurrentKick + 0.25375
+    goalcurrent = 0.875*(Torque_g+Torque_cs) ;} //  + CurrentKick + 0.25375*/
+   Torque_g = 1000*0.875*Torque_g; 
+   Torque_cs = -1000*0.875*Torque_cs;
 
-    dxl.setGoalCurrent(3,-1000*goalcurrent,UNIT_MILLI_AMPERE);
+   Serial1.print("Torque_cs: ");
+   Serial1.println(Torque_cs);
+   Serial1.print("Torque_g: ");
+   Serial1.println(Torque_g);
+
+   goalcurrent = Torque_cs + Torque_g;
+    dxl.setGoalCurrent(3,goalcurrent,UNIT_MILLI_AMPERE);
     Serial1.print("Goal current");
     Serial1.println(goalcurrent);
     oldPose = J3Pose;
