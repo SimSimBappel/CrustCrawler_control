@@ -216,7 +216,7 @@ void current(void)
 
   while (1)
   {
-
+/*
     k_wait(curSem, 0);
     prevMillis = millis();
 
@@ -226,7 +226,7 @@ void current(void)
 
     Serial1.println(msg);
 
-    // M1
+    
 
     for (int i = 0; i < 7; i++)
     {
