@@ -45,7 +45,7 @@ const int EMGdev = 25;
 void setup() {
   Serial.begin(115200);
   while (!Serial);
-  mySerial.begin(57600);
+  mySerial.begin(115200);
 
   //startMillis = millis();
 
