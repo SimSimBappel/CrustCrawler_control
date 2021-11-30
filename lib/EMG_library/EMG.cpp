@@ -41,19 +41,28 @@ EMG::EMG(){
   //intentionally do nothing
 }
 
-void EMG::GetInput(int time){
+void EMG::GetInput(){  
+
+
   for(int i = 0; i < 24; i++){
     while(!Serial.available());
     _str[i] = Serial.read();
-    if(_str[i] == 0X7E){
-      i = 0;
+
+    //Make sure it reads from start
+    if(i == 2){
+      if(_str[0] == 0X7E && _str[1] == 0X00 && _str[2] == 0X14){
+      i = 2;
+      }
     }
-    //delay(1); Experimental delay.
-    if(i == 23 && _str[0] != 0X7E){
+
+    else{
       i = -1;
     }
+    /*if(i == 23 && _str[0] != 0X7E){
+      i = -1;
+    }*/
   }
-  delay(time);
+  //delay(time);
 }
 
 void EMG::reset(){
@@ -62,7 +71,7 @@ void EMG::reset(){
   }
 }
 
-void EMG::returnInput(){
+void EMG::printInput(){
   for(int i = 0; i < 24; i++){
     Serial.print(_str[i], HEX);
     Serial.print(" ");
@@ -85,7 +94,6 @@ int EMG::AccZ(){
 
 int EMG::EMG1(){
   return _str[20] + _str[19] * 256;
-  //return _str[19];
 }
 
 
