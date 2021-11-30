@@ -339,7 +339,7 @@ void current(void)
           ref = false;
         }
       
-      
+       
     }
     /*
      Serial1.print("thetas");
@@ -350,7 +350,7 @@ void current(void)
      Serial1.println(theta3);
      */
 
-    // Torque_cs = 0.00025*(dxl.getCurPosition(3)-goalPose);//controller.PIDController_Update(controller, goalPose,dxl.getCurPosition(3));
+    // Torque_cs = 0.00025*(dxl.getCurPosition(3)-goalPose);//controller.PIDController_Update(controller, goalPose,dxl.getCurPosition(3),dxl.getPresentVelocity(3));
 
     float gconst = 0.45; // 1.2956;
     Torque_g = m3 * ((gconst * cos(theta1 * PI / 180) * sin(theta3 * PI / 180)) - ((gconst * cos(theta2 * PI / 180)) * cos(theta3 * PI / 180)) * sin(theta1 * PI / 180));
@@ -367,8 +367,6 @@ void current(void)
     torque = (torque_Nm + Torque_g)*875;
 
     dxl.setGoalCurrent(3, torque, UNIT_MILLI_AMPERE);
-    
-
     
      Serial1.print("Torque: ");
      Serial1.println(torque);
