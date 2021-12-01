@@ -38,8 +38,8 @@ int sendpitch;
 
 float roll,pitch; // roll == M1, pitch == M2 bacts
 
-int BaseEMG1 = 1000;
-int BaseEMG2 = 1000;
+int BaseEMG1 = 1030;
+int BaseEMG2 = 1030;
 const int EMGdev = 25;
 
 void setup() {
@@ -93,7 +93,6 @@ void loop() {
     roll = atan(aY_show / sqrt(pow(aX_show, 2) + pow(aZ_show, 2))) * 180 / 3.14;
     pitch = atan(-1 * aX_show / sqrt(pow(aY_show, 2) + pow(aZ_show, 2))) * 180 / 3.14;
 
-
     if( aZ_show < 0 && aY_show < 0){
        pitch = -180-pitch;
     }
@@ -103,7 +102,6 @@ void loop() {
     else if( aZ_show < 0 && aY_show > 0){
       // probably nothing
       }
-    
 
     //conversion to dxl units
     roll = roll / 0.088;
