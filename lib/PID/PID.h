@@ -1,94 +1,58 @@
 class PID {
  private:
-	/* Controller gains */
+	// Controller gains 
 	float Kp;
 	float Ki;
 	float Kd;
 
-	/* Derivative low-pass filter time constant */
-	float tau;
-
-	/* Output limits */
+	// Output limits 
 	float limMin;
 	float limMax;
-	
-	/* Integrator limits */
-	float limMinInt;
-	float limMaxInt;
 
-	/* Sample time (in seconds) */
-	float T;
+	// Previous measurements
 
-	/* Controller "memory" */
-	float integrator;
-	float prevError;			/* Required for integrator */
-	float differentiator;
-	float prevMeasurement;		/* Required for differentiator */
-    float prevDerivative;
+	float Diff;
+	float prevPose;		// Required for differentiator 
+    float prevDiff;
+    float Inertia; 
 public:
-	/* Controller output */
+	// Controller output 
 	float out;
-    void Controller_Init(PID &pid,float Kp, float Kd, float Ki)
+    void Controller_Init(PID &pid,float omegac, float zeta)
 {
+    float omegac = 5.0, zeta = 1.5, kp = omegac * omegac, kd = 2 * zeta * omegac;
 	// Use controller variables
     pid.Kp = Kp;
-    pid.Kp = Kd;
-    pid.Kp = Ki;
+    pid.Kd = Kd;
 
-    /* Clear controller variables */
-	pid.integrator = 0.0;
-	pid.prevError  = 0.0;
+	pid.diff  = 0;
+	pid.prevPose = 0;
 
-	pid.differentiator  = 0.0;
-	pid.prevMeasurement = 0.0;
-    pid.tau = 4;
+    float PID.Inertia = 0.0001627; // Inertia 
 
 };
-    float PIDController_Update(PID &pid, float reference, float measurement){
+    float PIDController_Update(PID &pid, float goal, float pose, float velocity){
     
-    float error = reference - measurement; // Error signal
+    float error = goal - pose; // Error signal
     float prop = pid.Kp * error; //Proportional contribution
-    
-    float integrator = pid.integrator + 0.5 * pid.Ki * pid.T * (error + pid.prevError); //Integral contribution
 
-	// Static integrator Limits 
-    if (pid.integrator > pid.limMaxInt) {
-
-        pid.integrator = pid.limMaxInt;
-
-    } else if (pid.integrator < pid.limMinInt) {
-
-        pid.integrator = pid.limMinInt;
-    }
-
-		
-    float differentiator = -(2.0 * pid.Kd * (measurement - pid.prevMeasurement)	// Derivative Contribution
-                        + (2.0 * pid.tau - pid.T) * prevDerivative)
-                        / (2.0 * pid.tau + pid.T);
-
-
-	
+	float diff = -pid.kv * velocity;
 	// Compute output and apply limits
 	
-    float output = prop + integrator + differentiator;
-    /*
+    float output = prop + diff;
+    
     if (output > pid.limMax) {
         output = pid.limMax;
     } 
     else if (output < pid.limMin) {
         output = pid.limMin;
     }
-    */
+    
 	// Store error and measurement for later use 
     pid.prevError       = error;
-    pid.prevMeasurement = measurement;
-    pid.prevDerivative = differentiator;
-    /*Serial1.println("prop: ");
-    Serial1.println(prop);
-    Serial1.println("integrator :" );
-    Serial1.println(integrator);
-    Serial1.println("differentiator:");
-    Serial1.println(differentiator);*/
+    pid.prevPose = pose;
+    pid.prevDiff = diff;
+
 	// Returns Output
-    return output;
+    return output*pid.Inertia;
 }; };
