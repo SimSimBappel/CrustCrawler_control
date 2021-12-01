@@ -17,13 +17,13 @@ struct k_t *pserialHandler, *pcurrent, *pgripper, *pt4;
 struct k_msg_t *msgQ, *msgQ2;
 char dataBufForMsgQ[100];
 char dataBufForMsgQ2[100];
-struct k_t *gripSem, *curSem;
+struct k_t *gripSem, *posSem;
 
 // find proper stacksize, see void setup comments
 char s1[1000];
-char s2[500];
+char s2[1000];
 char s3[1000];
-char s4[500];
+char s4[1000];
 
 void serialHandler(void)
 {
@@ -94,7 +94,7 @@ void serialHandler(void)
     { // current input given in miliampere
       // make sure the message queue is emptied idk how
       res = k_send(msgQ2, &receivedChars);
-      k_signal(curSem);
+      k_signal(posSem);
       receivedChars[0] = ' ';
       k_sleep(10);
     }
@@ -135,21 +135,7 @@ void serialHandler(void)
 void current(void)
 {
 
-  uint8_t DXL_ID = 1;
-  dxl.torqueOff(DXL_ID);
-  dxl.setOperatingMode(DXL_ID, OP_POSITION);
-  dxl.writeControlTableItem(PROFILE_VELOCITY, DXL_ID, 200);
-  dxl.writeControlTableItem(PROFILE_ACCELERATION, DXL_ID, 20);
-  dxl.torqueOn(DXL_ID);
-
-  DXL_ID = 2;
-  dxl.torqueOff(DXL_ID);
-  dxl.setOperatingMode(DXL_ID, OP_POSITION);
-  dxl.writeControlTableItem(PROFILE_VELOCITY, DXL_ID, 200);
-  dxl.writeControlTableItem(PROFILE_ACCELERATION, DXL_ID, 20);
-  dxl.torqueOn(DXL_ID);
-
-  DXL_ID = 3;
+  uint8_t DXL_ID = 3;
   dxl.torqueOff(DXL_ID);
   dxl.setOperatingMode(DXL_ID, OP_CURRENT); // Skal sættes til current senere hvis control system skal laves
   dxl.writeControlTableItem(PROFILE_VELOCITY, DXL_ID, 10);
@@ -196,86 +182,16 @@ void current(void)
   float omega, torque_Nm = 0.07;
   float theta_ref = 0, theta_ref_90 = 90, theta_ref_10 = 45; // ref 90 og 10 er test
   float Jt = 0.0001627;
-  float omegac = 5.0, zeta = 1.5, kp = omegac * omegac, kv = 2 * zeta * omegac;
+  float omegac = 13, zeta = 0.7, kp = omegac * omegac, kv = 2 * zeta * omegac;
 
   float CurrentKick = 3.6;
-  /*
-  float goalcurrent;
-  int goalPose = 2020;
-  float Torque_g;
-  float Torque_cs;
-  int errorInt;
   
-  float oldPose;
-  bool in_movement = false;
-  //gripper fixed code
-
-  PID controller;
-  controller.Controller_Init(controller, 0.5 , 0.0, 0.0);
-  */
 
   while (1)
   {
-/*
-    k_wait(curSem, 0);
-    prevMillis = millis();
-
-    res = k_receive(msgQ2, &msg, 10, &lostMessages);
-
-    // P,roll,pitch
-
-    Serial1.println(msg);
-
     
-
-    for (int i = 0; i < 7; i++)
-    {
-      tempMsg[i] = ' ';
-    }
-
-    for (int i = 1; i < 7; i++)
-    {
-      if (msg[i] == ',')
-      {
-        lastKomma = i + 1;
-        i = 100;
-      }
-      else
-      {
-        tempMsg[i - 1] = msg[i];
-      }
-    }
-    tempPos = 2700 - atoi(tempMsg);
-    // Serial1.print("m1: ");
-    // Serial1.print(tempPos);
-    dxl.setGoalPosition(1, tempPos);
-    theta1 = (-dxl.getCurPosition(1) + 2700) * 0.088;
-    // Serial1.print(theta1);
-    // M2
-
-    for (int i = 0; i < 7; i++)
-    {
-      tempMsg[i] = ' ';
-    }
-
-    for (int i = lastKomma; i < 13; i++)
-    {
-      if (msg[i] == ',')
-      {
-        lastKomma = i + 1;
-        i = 100;
-      }
-      else
-      {
-        tempMsg[i - lastKomma] = msg[i];
-      }
-    }
-    tempPos = 1170 - atoi(tempMsg);
-    // Serial1.print("m2: ");
-    // Serial1.print(tempPos);s
-    dxl.setGoalPosition(2, tempPos);
-    theta2 = (dxl.getCurPosition(2) - 1038) * 0.088;
-
+/*
+    
     // M3
 
     for (int i = 0; i < 7; i++)
@@ -296,16 +212,15 @@ void current(void)
     }
 
     tempPos = atoi(tempMsg); // tempPos could be renamed to tempCurrent
-    /*
+    
      if (tempPos == 1)
        goalPose = goalPose + 5;
      if (tempPos == 0)
        goalPose = goalPose - 5;
      */
     // goalPose = 1500;
-    theta3 = (dxl.getCurPosition(3) - 2020) * 0.088;
 
-    /*
+      /*
      Serial1.print("Goal:");
      Serial1.print(goalPose);
      Serial1.print(" Pose ");
@@ -314,16 +229,26 @@ void current(void)
      Serial1.println(goalPose-J3Pose);
     */
 
-    omega = (dxl.getPresentVelocity(3, UNIT_RPM)/360)*60;
 
-    Serial1.print("A: ");
-    Serial1.print(theta3);
-    Serial1.print(", A_ref: ");
-    Serial1.print(theta_ref);
-    Serial1.print(", A_vel: ");
-    Serial1.print(omega);
-    Serial1.print(", T_Nm: ");
-    Serial1.println(torque_Nm);
+
+    theta1 = (-dxl.getCurPosition(1) + 2700) * 0.088;
+    theta2 = (dxl.getCurPosition(2) - 1038) * 0.088;
+    theta3 = (dxl.getCurPosition(3) - 2020) * 0.088;
+
+  if(dxl.getPresentVelocity(3, UNIT_RPM)<0){ //make if so that if it is approaching the gravitational vector the dampening should be larger
+    zeta = 1.3;
+  }
+  else{
+    zeta = 0.6;
+  }
+
+  omega = dxl.getPresentVelocity(3, UNIT_RPM) * 6;
+    
+
+
+
+
+    
 
     if (millis() - t > 5000)
     {
@@ -331,26 +256,21 @@ void current(void)
       if (ref == false){
         theta_ref = theta_ref_10;
         ref = true;
+        dxl.setGoalCurrent(3, -400 ,UNIT_MILLI_AMPERE);
+        delay(20);
       }
 
       else if (ref == true)
         {
           theta_ref = theta_ref_90;
           ref = false;
+          dxl.setGoalCurrent(3, 400 ,UNIT_MILLI_AMPERE);
+          delay(20);
         }
       
       
     }
-    /*
-     Serial1.print("thetas");
-     Serial1.print(theta1);
-     Serial1.print("   ");
-     Serial1.print(theta2);
-     Serial1.print("    ");
-     Serial1.println(theta3);
-     */
-
-    // Torque_cs = 0.00025*(dxl.getCurPosition(3)-goalPose);//controller.PIDController_Update(controller, goalPose,dxl.getCurPosition(3));
+   
 
     float gconst = 0.45; // 1.2956;
     Torque_g = m3 * ((gconst * cos(theta1 * PI / 180) * sin(theta3 * PI / 180)) - ((gconst * cos(theta2 * PI / 180)) * cos(theta3 * PI / 180)) * sin(theta1 * PI / 180));
@@ -364,17 +284,24 @@ void current(void)
 
     torque_Nm = Jt * (kp * (theta_ref - theta3) - kv * omega);
 
-    torque = (torque_Nm + Torque_g)*875;
+    torque = (torque_Nm + Torque_g)*875; //to milli anps
 
+    
+    
     dxl.setGoalCurrent(3, torque, UNIT_MILLI_AMPERE);
     
 
-    
-     Serial1.print("Torque: ");
-     Serial1.println(torque);
+    Serial1.print("A:");
+    Serial1.print(theta3);
+    Serial1.print(",A_ref:");
+    Serial1.print(theta_ref);
+    Serial1.print(",Torque_Nm:");
+    Serial1.print(torque_Nm*100);
+    Serial1.print(",Torque_g:");
+    Serial1.print(Torque_g) * 875;
+    Serial1.print("Torque:");
+    Serial1.println(torque);
      /*
-     Serial1.print("Torque_g: ");
-     Serial1.println(Torque_g);
 
      goalcurrent = Torque_cs + Torque_g;
       dxl.setGoalCurrent(3,goalcurrent,UNIT_MILLI_AMPERE);
@@ -388,9 +315,9 @@ void current(void)
     */
 
     // gripper fixed code 2
-    if (dxl.readControlTableItem(PRESENT_LOAD, 4) < -300 && dxl.readControlTableItem(PRESENT_LOAD, 5) > 300)
+    /*if (dxl.readControlTableItem(PRESENT_LOAD, 4) < -300 && dxl.readControlTableItem(PRESENT_LOAD, 5) > 300)
     {
-      Serial1.println("Gripper Fixed");
+      //Serial1.println("Gripper Fixed");
       m4Pos = dxl.getPresentPosition(4);
       m5Pos = dxl.getPresentPosition(5);
       dxl.torqueOff(4);
@@ -401,9 +328,9 @@ void current(void)
       // dxl.torqueOn(5);
       dxl.setGoalPosition(4, m4Pos);
       dxl.setGoalPosition(5, m5Pos);
-    }
+    }*/
 
-    k_sleep(100);
+    k_sleep(30);
   }
 }
 
@@ -430,7 +357,7 @@ void gripper(void)
 
     if (msg[1] == 'O')
     { // OPEN
-      Serial1.println("gripper open");
+      //Serial1.println("gripper open");
 
       // dxl.setGoalPosition(4, 2685);
       dxl.setGoalPWM(4, POS, UNIT_RAW);
@@ -440,7 +367,7 @@ void gripper(void)
     }
     else if (msg[1] == 'C')
     { // close
-      Serial1.println("gripper close");
+      //Serial1.println("gripper close");
 
       // dxl.setGoalPosition(4, 2149);
       dxl.setGoalPWM(4, -POS, UNIT_RAW);
@@ -473,9 +400,71 @@ void t4(void){
   dxl.writeControlTableItem(PROFILE_ACCELERATION, DXL_ID, 20);
   dxl.torqueOn(DXL_ID);
 
+  char res;
+  int lostMessages;
+  char msg[20];
+  char tempMsg[7];
+  int tempPos;
+  int lastKomma;
+
   while (1)
   {
+    k_wait(posSem, 0);
+
+    res = k_receive(msgQ2, &msg, 10, &lostMessages);
+
+    // P,roll,pitch
+
+    //Serial1.println(msg);
+
     
+
+    for (int i = 0; i < 7; i++)
+    {
+      tempMsg[i] = ' ';
+    }
+
+    for (int i = 1; i < 7; i++)
+    {
+      if (msg[i] == ',')
+      {
+        lastKomma = i + 1;
+        i = 100;
+      }
+      else
+      {
+        tempMsg[i - 1] = msg[i];
+      }
+    }
+    tempPos = 2700 - atoi(tempMsg);
+    // Serial1.print("m1: ");
+    // Serial1.print(tempPos);
+    dxl.setGoalPosition(1, tempPos);
+    
+    // Serial1.print(theta1);
+    // M2
+
+    for (int i = 0; i < 7; i++)
+    {
+      tempMsg[i] = ' ';
+    }
+
+    for (int i = lastKomma; i < 13; i++)
+    {
+      if (msg[i] == ',')
+      {
+        lastKomma = i + 1;
+        i = 100;
+      }
+      else
+      {
+        tempMsg[i - lastKomma] = msg[i];
+      }
+    }
+    tempPos = 1170 - atoi(tempMsg);
+    dxl.setGoalPosition(2, tempPos);
+    
+
   }
 
   k_sleep(10);
@@ -483,12 +472,11 @@ void t4(void){
 
 void setup()
 {
-
   // Serial definition--
   // Native serial port (switches from USB-port to dynamixel with physical switch)
   dxl.begin(115200);
   // second serial (the one that communicates with UNO)
-  Serial1.begin(115200);
+  Serial1.begin(57600);
   //--
 
   dxl.setPortProtocolVersion(DXL_PROTOCOL_VERSION);
@@ -503,13 +491,13 @@ void setup()
   msgQ2 = k_crt_send_Q(1, sizeof(char[20]), dataBufForMsgQ2);
 
   // each pt(n) is a pointer to a function t(n), priority, stack size
-  pserialHandler = k_crt_task(serialHandler, 1, 500);
-  pcurrent = k_crt_task(current, 2, 500);
-  pgripper = k_crt_task(gripper, 3, 3000);
-  pt4 = k_crt_task(t4, 5, 500);
+  pserialHandler = k_crt_task(serialHandler, 1, 1000);
+  pcurrent = k_crt_task(current, 2, 1000);
+  pgripper = k_crt_task(gripper, 3, 1000);
+  pt4 = k_crt_task(t4, 5, 1000);
 
   gripSem = k_crt_sem(0, 1);
-  curSem = k_crt_sem(0, 1);
+  posSem = k_crt_sem(0, 1);
 
   // stack size----
   // Arudino Mega has 8 kByte RAM
