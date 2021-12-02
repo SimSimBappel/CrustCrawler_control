@@ -1,42 +1,57 @@
-%syms theta1(t) theta2(t) theta3(t); 
 %% setup
 syms theta1 theta2 theta3 dtheta1 dtheta2 dtheta3 ddtheta3
 %theta1 = 100; theta2= 100; theta3 = 100; dtheta1 = 10; dtheta2 = 10; dtheta3 = 10;
-LC1 = 0.0332;
+LC1 = 0.0332; %Lengths form the joint to the COM in meters
 LC2 = 0.1625;
 LC3 = 0.132;
 
-L1 = 0.0565;
+L1 = 0.0565; %Lengths form the previous joint to the next in meters
 L2 = 0.2279;
 L3 = 0.1335;
 
-m1 = 0.226;
+m1 = 0.226; %Mass of the link
 m2 = 0.230;
 m3 = 0.306;
+
+g = [9.815; 0; 0]; 
+z = [0; 0; 1];
+
+s1 = [0; 0; L1];
+s2 = [L2; 0; 0];
+s3 = [L3; 0; 0];
+
+sc2 = [LC2; 0; 0];
+sc3 = [LC3; 0; 0];
+
 %% Make Rotation matrices
-R01 = rotz(theta1);
-R12 = rotx(-pi/2)*rotz(theta2);
-R23 = rotx(-pi/2)*rotz(theta3);
-R03 = R01*R12*R23;
+a = [0;0;L2;L3];
+alpha = [0;pi/2; pi/2;0];
+d = [0;L1;0;0];
 
-%% Calculate velocities
+T01 = DHTrans(a(1),alpha(1),d(1),0,theta1);
+T12 = DHTrans(a(2),alpha(2),d(2),0,theta2);
+T23 = DHTrans(a(3),alpha(3),d(3),0,theta3);
 
-omega1 = dtheta1*R01[0;0;1];
-g = [9.815;0;0];
-z = [0;0;1];
-v1 = 0;
-s1 = [0;0;5.65];
-v2 = v1 + cross(omega1, s1);
+R01 = T01(1:3,1:3);
+R12 = T12(1:3,1:3);
+R23 = T23(1:3,1:3);
 
-s2 = [L2;0;0];
-sc2 = R02*[LC2;0;0];
-omega2 = omega1 + dtheta2*R12*z;
-vc2 = v2 + cross(omega2, sc2);
-v3 = v2 + cross(omega2, s2);
+%% Calculate velocities taken from craig s.176
+omega0 = 0;
+omegadot0 = 0;
+Vdot0 = 0;
 
-omega3 = omega2 + dtheta3*R23*z;
-sc3 = [LC3*cos(theta3); 0; LC3*sin(theta3)];
-vc3 = v3 + cross(omega3, sc3);
+
+% omega1 = dtheta1*R01*[0;0;1];
+% v1 = 0;
+% 
+% v2 = v1 + cross(omega1, s1);
+% omega2 = omega1 + dtheta2*R12*z;
+% vc2 = v2 + cross(omega2, sc2);
+% 
+% v3 = v2 + cross(omega2, s2);
+% omega3 = omega2 + dtheta3*R23*z;
+% vc3 = v3 + cross(omega3, sc3);
 
 %% Inertia Tensor
 % 
