@@ -7,8 +7,8 @@ class EMG
 {
   public:
     EMG();
-    void GetInput(int time);
-    void returnInput();
+    void GetInput();
+    void printInput();
     void reset();
     int AccX();
     int AccY();
