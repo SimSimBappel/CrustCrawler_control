@@ -41,28 +41,32 @@ EMG::EMG(){
   //intentionally do nothing
 }
 
-void EMG::GetInput(int time){
+//Get input from EMG module
+void EMG::GetInput(){ 
+  //read input and put data into array 
   for(int i = 0; i < 24; i++){
-    while(!Serial.available());
-    _str[i] = Serial.read();
-    if(_str[i] == 0X7E){
-      i = 0;
-    }
-    //delay(1); Experimental delay.
-    if(i == 23 && _str[0] != 0X7E){
+    
+    while(!Serial.available()); //Wait for data to be received
+    _str[i] = Serial.read(); //Save incoming byte into string array that is not string but integer.
+
+    //Make sure it reads from start
+    if(i == 2){
+      if(_str[0] != 0X7E || _str[1] != 0X00 || _str[2] != 0X14){ //make sure that data is proper arranged
       i = -1;
+      }
     }
   }
-  delay(time);
 }
 
+//reset values in the input array
 void EMG::reset(){
   for(int i = 0; i < 24; i++){
     _str[i] = 0;
   }
 }
 
-void EMG::returnInput(){
+//Prints out the complete package
+void EMG::printInput(){
   for(int i = 0; i < 24; i++){
     Serial.print(_str[i], HEX);
     Serial.print(" ");
@@ -70,25 +74,27 @@ void EMG::returnInput(){
   Serial.println(" ");
 }
 
+//access the accellerometer x value
 int EMG::AccX(){
     return _str[18] + (_str[17] << 8);
 }
 
+//access the accellerometer y value
 int EMG::AccY(){
     return _str[16] + (_str[15] << 8);
 }
 
+//access the accellerometer z value
 int EMG::AccZ(){
     return _str[14] + (_str[13] << 8);
 }
 
-
+//access the EMG 1 value
 int EMG::EMG1(){
   return _str[20] + _str[19] * 256;
-  //return _str[19];
 }
 
-
+//access the EMG 2 value
 int EMG::EMG2(){
   return _str[22] + _str[21] * 256;
 }
