@@ -270,20 +270,7 @@ void current(void)
       
        
     }
-<<<<<<< HEAD
    
-=======
-    /*
-     Serial1.print("thetas");
-     Serial1.print(theta1);
-     Serial1.print("   ");
-     Serial1.print(theta2);
-     Serial1.print("    ");
-     Serial1.println(theta3);
-     */
-
-    // Torque_cs = 0.00025*(dxl.getCurPosition(3)-goalPose);//controller.PIDController_Update(controller, goalPose,dxl.getCurPosition(3),dxl.getPresentVelocity(3));
->>>>>>> aa618013968cd579f902a8e6ee8cb240f23a8839
 
     float gconst = 0.45; // 1.2956;
     Torque_g = m3 * ((gconst * cos(theta1 * PI / 180) * sin(theta3 * PI / 180)) - ((gconst * cos(theta2 * PI / 180)) * cos(theta3 * PI / 180)) * sin(theta1 * PI / 180));
@@ -303,7 +290,6 @@ void current(void)
     
     dxl.setGoalCurrent(3, torque, UNIT_MILLI_AMPERE);
     
-<<<<<<< HEAD
 
     Serial1.print("A:");
     Serial1.print(theta3);
@@ -315,10 +301,6 @@ void current(void)
     Serial1.print(Torque_g) * 875;
     Serial1.print("Torque:");
     Serial1.println(torque);
-=======
-     Serial1.print("Torque: ");
-     Serial1.println(torque);
->>>>>>> aa618013968cd579f902a8e6ee8cb240f23a8839
      /*
 
      goalcurrent = Torque_cs + Torque_g;
