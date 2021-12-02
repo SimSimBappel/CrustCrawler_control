@@ -25,6 +25,23 @@ char s2[1000];
 char s3[1000];
 char s4[1000];
 
+bool shouldMoveUp(double omega, float torque){
+  if(omega == 0.00 && torque > 0.05){
+    return true;
+  }
+  else{
+    return false;
+  }
+}
+bool shouldMoveDown(double omega, float torque){
+  if(omega == 0.00 && torque < -0.05){
+    return true;
+  }
+  else{
+    return false;
+  }
+}
+
 void serialHandler(void)
 {
   // Serial
@@ -101,7 +118,7 @@ void serialHandler(void)
 
     if (receivedChars[0] == 'S' && motorsOn)
     {
-      for (int i = 0; i < 6; i++)
+      for (int i = 1; i <=5 ; i++)
       {
         receivedChars[i] = 'A';
         dxl.torqueOff(i);
@@ -114,7 +131,7 @@ void serialHandler(void)
     {
       Serial1.println("Dynamixel Start");
       delay(2000);
-      for (int i = 0; i < 6; i++)
+      for (int i = 1; i <= 5; i++)
       {
         receivedChars[i] = 'A';
         dxl.torqueOn(i);
@@ -128,7 +145,7 @@ void serialHandler(void)
     // Serial1.println(t4Millis-startMillis);
     startMillis = t4Millis;
 
-    k_sleep(10);
+    k_sleep(30);
   }
 }
 
@@ -151,7 +168,7 @@ void current(void)
   dxl.torqueOff(DXL_ID);
   dxl.setOperatingMode(DXL_ID, OP_PWM);
   dxl.torqueOn(DXL_ID);
-
+/*
   char res;
   int lostMessages;
   char msg[20];
@@ -159,12 +176,9 @@ void current(void)
   int tempPos;
   int lastKomma;
 
-  int m4Pos;
-  int m5Pos;
-
   unsigned long prevMillis = 0;
   bool serialDebug = true;
-
+*/
   float theta1;
   float theta2;
   float theta3;
@@ -177,14 +191,15 @@ void current(void)
   float m3 = 0.306; // weight of 3rd link in kg
 
   unsigned long t = 0;
-  unsigned long ts = millis();
+  //unsigned long ts = millis();
   int torque = 10;
-  float omega, torque_Nm = 0.07;
-  float theta_ref = 0, theta_ref_90 = 90, theta_ref_10 = 45; // ref 90 og 10 er test
+  double omega;
+  float torque_Nm = 0.07;
+  float theta_ref = 0, theta_ref_90 = -50, theta_ref_10 = 45; // ref 90 og 10 er test
   float Jt = 0.0001627;
-  float omegac = 13, zeta = 0.7, kp = omegac * omegac, kv = 2 * zeta * omegac;
+  float omegac = 11, zeta = 0.35, kp = omegac * omegac, kv = 2 * zeta * omegac;
 
-  float CurrentKick = 3.6;
+  float currentKick = 275;
   
 
   while (1)
@@ -220,35 +235,17 @@ void current(void)
      */
     // goalPose = 1500;
 
-      /*
-     Serial1.print("Goal:");
-     Serial1.print(goalPose);
-     Serial1.print(" Pose ");
-     Serial1.print(J3Pose);
-     Serial1.print("  Error:");
-     Serial1.println(goalPose-J3Pose);
-    */
 
 
 
     theta1 = (-dxl.getCurPosition(1) + 2700) * 0.088;
     theta2 = (dxl.getCurPosition(2) - 1038) * 0.088;
-    theta3 = (dxl.getCurPosition(3) - 2020) * 0.088;
-
-  if(dxl.getPresentVelocity(3, UNIT_RPM)<0){ //make if so that if it is approaching the gravitational vector the dampening should be larger
-    zeta = 1.3;
-  }
-  else{
-    zeta = 0.6;
-  }
-
-  omega = dxl.getPresentVelocity(3, UNIT_RPM) * 6;
+    theta3 = (dxl.getCurPosition(3) - 1535) * 0.088;
+    
+    omega = dxl.getPresentVelocity(3, UNIT_RPM) * 6;
     
 
 
-
-
-    
 
     if (millis() - t > 5000)
     {
@@ -256,16 +253,14 @@ void current(void)
       if (ref == false){
         theta_ref = theta_ref_10;
         ref = true;
-        dxl.setGoalCurrent(3, -400 ,UNIT_MILLI_AMPERE);
-        delay(20);
+       
       }
 
       else if (ref == true)
         {
           theta_ref = theta_ref_90;
           ref = false;
-          dxl.setGoalCurrent(3, 400 ,UNIT_MILLI_AMPERE);
-          delay(20);
+         
         }
       
        
@@ -274,45 +269,38 @@ void current(void)
 
     float gconst = 0.45; // 1.2956;
     Torque_g = m3 * ((gconst * cos(theta1 * PI / 180) * sin(theta3 * PI / 180)) - ((gconst * cos(theta2 * PI / 180)) * cos(theta3 * PI / 180)) * sin(theta1 * PI / 180));
-    /*
-    if (Torque_g+Torque_cs < 0){
-    goalcurrent = 0.875*(Torque_g+Torque_cs) ;}  //- CurrentKick - 0.25375
-    else {
-    goalcurrent = 0.875*(Torque_g+Torque_cs) ;} //  + CurrentKick + 0.25375*/
-    // Torque_g = 1000*0.875*Torque_g;
-    // Torque_cs = -1000*0.875*Torque_cs;
+    
 
     torque_Nm = Jt * (kp * (theta_ref - theta3) - kv * omega);
 
-    torque = (torque_Nm + Torque_g)*875; //to milli anps
+    torque = (torque_Nm + Torque_g)*875; //to milli anps the minus the beacuse we dumb and need to flip the orientation of the new motor
 
+
+
+    if(shouldMoveUp(omega, torque_Nm)){ //make if so that if it is approaching the gravitational vector the dampening should be larger
+      torque += currentKick;
+    }
+    if(shouldMoveDown(omega, torque_Nm)){ //make if so that if it is approaching the gravitational vector the dampening should be larger
+      torque -= currentKick; 
+    }
     
     
     dxl.setGoalCurrent(3, torque, UNIT_MILLI_AMPERE);
+    //dxl.setGoalPWM(3, torque);
     
-
+    /*
     Serial1.print("A:");
     Serial1.print(theta3);
     Serial1.print(",A_ref:");
     Serial1.print(theta_ref);
     Serial1.print(",Torque_Nm:");
-    Serial1.print(torque_Nm*100);
+    Serial1.print(torque_Nm);
     Serial1.print(",Torque_g:");
-    Serial1.print(Torque_g) * 875;
+    Serial1.print(Torque_g);
     Serial1.print("Torque:");
     Serial1.println(torque);
-     /*
+    */
 
-     goalcurrent = Torque_cs + Torque_g;
-      dxl.setGoalCurrent(3,goalcurrent,UNIT_MILLI_AMPERE);
-      Serial1.print("Goal current");
-      Serial1.println(goalcurrent);
-    */
-    /*
-   GP
-   PP
-   Current
-    */
 
     // gripper fixed code 2
     /*if (dxl.readControlTableItem(PRESENT_LOAD, 4) < -300 && dxl.readControlTableItem(PRESENT_LOAD, 5) > 300)
@@ -413,10 +401,6 @@ void t4(void){
 
     res = k_receive(msgQ2, &msg, 10, &lostMessages);
 
-    // P,roll,pitch
-
-    //Serial1.println(msg);
-
     
 
     for (int i = 0; i < 7; i++)
@@ -467,7 +451,7 @@ void t4(void){
 
   }
 
-  k_sleep(10);
+  k_sleep(100);
 }
 
 void setup()
@@ -491,8 +475,8 @@ void setup()
   msgQ2 = k_crt_send_Q(1, sizeof(char[20]), dataBufForMsgQ2);
 
   // each pt(n) is a pointer to a function t(n), priority, stack size
-  pserialHandler = k_crt_task(serialHandler, 1, 1000);
-  pcurrent = k_crt_task(current, 2, 1000);
+  pserialHandler = k_crt_task(serialHandler, 2, 1000);
+  pcurrent = k_crt_task(current, 1, 1000);
   pgripper = k_crt_task(gripper, 3, 1000);
   pt4 = k_crt_task(t4, 5, 1000);
 
