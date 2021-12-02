@@ -11,7 +11,7 @@ unsigned long startMillis;
 unsigned long currentMillis;
 const unsigned long period = 2000;
 
-int sign = 2;
+int Direction = 2;
 
 bool gripperOpen = false;
 
@@ -137,15 +137,15 @@ void loop() {
      }
 
     else if (EMG1 > BaseEMG1 + 2*EMGdev){ //J3 positive direction
-      sign = 1;
+      Direction = 1;
       BaseEMG2 = makeBaseline(EMG2, BaseEMG2);
       }
     else if (EMG2 > BaseEMG2 + 0.5*EMGdev){ //J3 negative direction
-      sign = 0;
+      Direction = 0;
       BaseEMG1 = makeBaseline(EMG1, BaseEMG1);
       }
     else{
-      sign = 2;
+      Direction = 2;
         BaseEMG1 = makeBaseline(EMG1, BaseEMG1);  
         BaseEMG2 = makeBaseline(EMG2, BaseEMG2);
         }
@@ -155,7 +155,7 @@ void loop() {
     mySerial.print(",");
     mySerial.print(String(sendpitch));
     mySerial.print(",");
-    mySerial.print(String(sign));
+    mySerial.print(String(Direction));
     mySerial.print(">\n");
     
     
