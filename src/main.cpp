@@ -33,6 +33,7 @@ bool shouldMoveUp(double omega, float torque){
     return false;
   }
 }
+
 bool shouldMoveDown(double omega, float torque){
   if(omega == 0.00 && torque < -0.05){
     return true;
@@ -41,6 +42,29 @@ bool shouldMoveDown(double omega, float torque){
     return false;
   }
 }
+
+
+
+
+void turnTorqueOn(bool on)
+{
+  if(on)
+  {
+    for(int i = 1; i <= 5; i++)
+    {
+      dxl.torqueOn(i);
+    }
+  }
+  else
+  {
+    for(int i = 1; i <= 5; i++)
+    {
+      dxl.torqueOff(i);
+    }
+  }
+}
+
+
 
 void serialHandler(void)
 {
@@ -54,13 +78,12 @@ void serialHandler(void)
   char endMarker = '>';
   char rc;
 
-  char res;
   bool motorsOn = true;
 
   // loop
   while (1)
   {
-    int t4Millis = millis(); // delay tester
+    unsigned long t1Millis = millis(); // delay tester
     while (Serial1.available() > 0 && newData == false)
     {
       rc = Serial1.read();
@@ -96,55 +119,54 @@ void serialHandler(void)
       // Serial1.print("This just in ... ");
       // Serial1.print(receivedChars);
       newData = false;
-    }
 
-    if (receivedChars[0] == 'G')
+
+      if (receivedChars[0] == 'G')
     {
       // make sure the message queue is emptied idk how
-      res = k_send(msgQ, &receivedChars);
+      k_send(msgQ, &receivedChars);
       k_signal(gripSem);
-      receivedChars[0] = ' ';
+      //receivedChars[0] = ' ';
       k_sleep(10);
     }
 
     if (receivedChars[0] == 'P')
     { // current input given in miliampere
       // make sure the message queue is emptied idk how
-      res = k_send(msgQ2, &receivedChars);
+      k_send(msgQ2, &receivedChars);
       k_signal(posSem);
-      receivedChars[0] = ' ';
+      //receivedChars[0] = ' ';
       k_sleep(10);
+    }
+
+    if(receivedChars[0] == 'C'){
+
     }
 
     if (receivedChars[0] == 'S' && motorsOn)
     {
-      for (int i = 1; i <=5 ; i++)
-      {
-        receivedChars[i] = 'A';
-        dxl.torqueOff(i);
-      }
+      turnTorqueOn(false);
       Serial1.println("Dynamixel STOP");
       motorsOn = false;
-      receivedChars[0] = ' ';
+      //receivedChars[0] = ' ';
     }
     else if (receivedChars[0] == 'S' && !motorsOn)
     {
+      turnTorqueOn(true);
       Serial1.println("Dynamixel Start");
-      delay(2000);
-      for (int i = 1; i <= 5; i++)
-      {
-        receivedChars[i] = 'A';
-        dxl.torqueOn(i);
-      }
       motorsOn = true;
-      receivedChars[0] = ' ';
+      //receivedChars[0] = ' ';
     }
+    }
+
+    
 
     // delay tester
     // Serial1.print("t4 delay: ");
     // Serial1.println(t4Millis-startMillis);
-    startMillis = t4Millis;
-
+    //startMillis = t1Millis;
+    Serial1.print("t1msec: ");
+    Serial1.println(millis()-t1Millis);
     k_sleep(30);
   }
 }
@@ -197,14 +219,14 @@ void current(void)
   float torque_Nm = 0.07;
   float theta_ref = 0, theta_ref_90 = -50, theta_ref_10 = 45; // ref 90 og 10 er test
   float Jt = 0.0001627;
-  float omegac = 11, zeta = 0.35, kp = omegac * omegac, kv = 2 * zeta * omegac;
+  float omegac = 7, zeta = 0.35, kp = omegac * omegac, kv = 2 * zeta * omegac;
 
   float currentKick = 275;
   
 
   while (1)
   {
-    
+    unsigned long t2Millis = millis();
 /*
     
     // M3
@@ -288,7 +310,8 @@ void current(void)
     dxl.setGoalCurrent(3, torque, UNIT_MILLI_AMPERE);
     //dxl.setGoalPWM(3, torque);
     
-    /*
+    //__asm__ volatile ("cli");
+/*
     Serial1.print("A:");
     Serial1.print(theta3);
     Serial1.print(",A_ref:");
@@ -299,39 +322,37 @@ void current(void)
     Serial1.print(Torque_g);
     Serial1.print("Torque:");
     Serial1.println(torque);
-    */
+*/
+    //__asm__ volatile ("sei");
 
 
-    // gripper fixed code 2
-    /*if (dxl.readControlTableItem(PRESENT_LOAD, 4) < -300 && dxl.readControlTableItem(PRESENT_LOAD, 5) > 300)
-    {
-      //Serial1.println("Gripper Fixed");
-      m4Pos = dxl.getPresentPosition(4);
-      m5Pos = dxl.getPresentPosition(5);
-      dxl.torqueOff(4);
-      dxl.setOperatingMode(4, OP_POSITION);
-      // dxl.torqueOn(4);
-      dxl.torqueOff(5);
-      dxl.setOperatingMode(5, OP_POSITION);
-      // dxl.torqueOn(5);
-      dxl.setGoalPosition(4, m4Pos);
-      dxl.setGoalPosition(5, m5Pos);
-    }*/
+    
 
-    k_sleep(30);
+    Serial1.print("t2msec: ");
+    Serial1.println(millis()-t2Millis);
+    k_sleep(40);
   }
 }
 
 void gripper(void)
 {
-  char res;
   char msg[20];
   int lostMessages;
   float POS = 350;
+  int m4Pos;
+  int m5Pos;
+  bool moving = false;
 
   while (1)
   {
-    k_wait(gripSem, 0);
+    /*
+    unsigned long t3Millis = millis();
+    
+    if(!moving)
+    {
+      k_wait(gripSem, 0);
+    }
+    
 
     dxl.torqueOff(4);
     dxl.setOperatingMode(4, OP_PWM);
@@ -341,26 +362,18 @@ void gripper(void)
     dxl.setOperatingMode(5, OP_PWM);
     dxl.torqueOn(5);
 
-    res = k_receive(msgQ, &msg, 10, &lostMessages);
+    k_receive(msgQ, &msg, 10, &lostMessages);
 
     if (msg[1] == 'O')
-    { // OPEN
-      //Serial1.println("gripper open");
-
-      // dxl.setGoalPosition(4, 2685);
+    {
+      moving = true;
       dxl.setGoalPWM(4, POS, UNIT_RAW);
-
-      // dxl.setGoalPosition(5, 1600);
       dxl.setGoalPWM(5, -POS, UNIT_RAW);
     }
     else if (msg[1] == 'C')
-    { // close
-      //Serial1.println("gripper close");
-
-      // dxl.setGoalPosition(4, 2149);
+    { 
+      moving = true;
       dxl.setGoalPWM(4, -POS, UNIT_RAW);
-
-      // dxl.setGoalPosition(5, 2084);
       dxl.setGoalPWM(5, POS, UNIT_RAW);
     }
     else
@@ -368,6 +381,44 @@ void gripper(void)
       Serial1.println("msg2[1] is not == to c || o");
     }
 
+    // gripper fixed code 2
+    if (dxl.readControlTableItem(PRESENT_LOAD, 4) < -300 && dxl.readControlTableItem(PRESENT_LOAD, 5) > 300 && moving)
+    {
+      moving = false;
+      m4Pos = dxl.getPresentPosition(4);
+      m5Pos = dxl.getPresentPosition(5);
+      dxl.torqueOff(4);
+      dxl.setOperatingMode(4, OP_POSITION);
+      dxl.torqueOn(4);
+      dxl.torqueOff(5);
+      dxl.setOperatingMode(5, OP_POSITION);
+      dxl.torqueOn(5);
+      dxl.setGoalPosition(4, m4Pos);
+      dxl.setGoalPosition(5, m5Pos);
+    }
+
+
+    //__asm__ volatile ("cli");
+    
+
+      for(int i = 1; i <= 5; i++)
+      {
+        if(dxl.readControlTableItem(PRESENT_TEMPERATURE, i))
+        {
+          
+        }
+        else if(dxl.readControlTableItem(PRESENT_TEMPERATURE, i) == 0)
+        {
+          Serial1.print("ERROR motor: ");
+          Serial1.print(i);
+          Serial1.println("is not connected");
+        }
+      }
+    //__asm__ volatile ("sei");
+    Serial1.print("t3msec: ");
+    Serial1.println(millis()-t3Millis);
+    
+    */
     k_sleep(100);
   }
 }
@@ -376,32 +427,48 @@ void t4(void){
 
   uint8_t DXL_ID = 1;
   dxl.torqueOff(DXL_ID);
-  dxl.setOperatingMode(DXL_ID, OP_POSITION);
+  dxl.setOperatingMode(DXL_ID, OP_CURRENT);
   dxl.writeControlTableItem(PROFILE_VELOCITY, DXL_ID, 200);
   dxl.writeControlTableItem(PROFILE_ACCELERATION, DXL_ID, 20);
   dxl.torqueOn(DXL_ID);
 
   DXL_ID = 2;
   dxl.torqueOff(DXL_ID);
-  dxl.setOperatingMode(DXL_ID, OP_POSITION);
+  dxl.setOperatingMode(DXL_ID, OP_CURRENT);
   dxl.writeControlTableItem(PROFILE_VELOCITY, DXL_ID, 200);
   dxl.writeControlTableItem(PROFILE_ACCELERATION, DXL_ID, 20);
   dxl.torqueOn(DXL_ID);
 
-  char res;
   int lostMessages;
   char msg[20];
   char tempMsg[7];
   int tempPos;
   int lastKomma;
 
+  bool serialDebug = false;
+
+
+  float theta1;
+  float theta2;
+  float theta3;
+
+  float ddtheta1;
+
+  float mObj = 0;
+  
+
   while (1)
   {
     k_wait(posSem, 0);
 
-    res = k_receive(msgQ2, &msg, 10, &lostMessages);
+    unsigned long t4Millis = millis();
 
-    
+    k_receive(msgQ2, &msg, 10, &lostMessages);
+
+    theta1 = (-dxl.getCurPosition(1) + 2700) * 0.088;
+    theta2 = (dxl.getCurPosition(2) - 1038) * 0.088;
+    theta3 = (dxl.getCurPosition(3) - 1535) * 0.088;
+    calculatedd(1);
 
     for (int i = 0; i < 7; i++)
     {
@@ -421,12 +488,23 @@ void t4(void){
       }
     }
     tempPos = 2700 - atoi(tempMsg);
-    // Serial1.print("m1: ");
-    // Serial1.print(tempPos);
+
+
+
+
+
+    I13_3*ddtheta1 + 0.555*sin(theta2)*mObj*(sin(theta1)*cos(theta2)*cos(theta3) - 1.*cos(theta1)*sin(theta3)) - 0.555*sin(theta2)*cos(theta2)*mObj*(cos(theta1)*cos(theta2)*cos(theta3) + 1.*sin(theta1)*sin(theta3))
+
+
+
     dxl.setGoalPosition(1, tempPos);
     
-    // Serial1.print(theta1);
-    // M2
+
+
+
+
+
+    //M2
 
     for (int i = 0; i < 7; i++)
     {
@@ -447,18 +525,34 @@ void t4(void){
     }
     tempPos = 1170 - atoi(tempMsg);
     dxl.setGoalPosition(2, tempPos);
-    
 
+
+    for(int i = 1; i <= 5 && serialDebug; i++){
+      Serial1.print(" M");
+      Serial1.print(i);
+      Serial1.print(" load: ");
+      Serial1.print(dxl.readControlTableItem(PRESENT_LOAD, i));
+      Serial1.print(" Temp: ");
+      Serial1.print(dxl.readControlTableItem(PRESENT_TEMPERATURE, i));
+      Serial1.print(" Angle: ");
+      Serial1.println(dxl.getPresentPosition(i));
+    }
+
+
+    Serial1.print("t4msec: ");
+    Serial1.println(millis()-t4Millis);
+    k_sleep(80);
   }
-
-  k_sleep(100);
 }
+
+
+
 
 void setup()
 {
   // Serial definition--
   // Native serial port (switches from USB-port to dynamixel with physical switch)
-  dxl.begin(115200);
+  dxl.begin(1000000);
   // second serial (the one that communicates with UNO)
   Serial1.begin(57600);
   //--
@@ -475,10 +569,10 @@ void setup()
   msgQ2 = k_crt_send_Q(1, sizeof(char[20]), dataBufForMsgQ2);
 
   // each pt(n) is a pointer to a function t(n), priority, stack size
-  pserialHandler = k_crt_task(serialHandler, 2, 1000);
-  pcurrent = k_crt_task(current, 1, 1000);
-  pgripper = k_crt_task(gripper, 3, 1000);
-  pt4 = k_crt_task(t4, 5, 1000);
+  pserialHandler = k_crt_task(serialHandler, 1, 1000);
+  pcurrent = k_crt_task(current, 2, 1000);
+  pgripper = k_crt_task(gripper, 4, 1000);
+  pt4 = k_crt_task(t4, 3, 1000);
 
   gripSem = k_crt_sem(0, 1);
   posSem = k_crt_sem(0, 1);
