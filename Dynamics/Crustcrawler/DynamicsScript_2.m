@@ -1,5 +1,5 @@
 %% setup
-syms theta1 theta2 theta3 dtheta1 dtheta2 dtheta3 ddtheta3
+syms theta1 theta2 theta3 dtheta1 dtheta2 dtheta3 ddtheta1 ddtheta2 ddtheta3
 %theta1 = 100; theta2= 100; theta3 = 100; dtheta1 = 10; dtheta2 = 10; dtheta3 = 10;
 LC1 = 0.0332; %Lengths form the joint to the COM in meters
 LC2 = 0.1625;
@@ -20,6 +20,7 @@ s1 = [0; 0; L1];
 s2 = [L2; 0; 0];
 s3 = [L3; 0; 0];
 
+sc1 = [0; 0; LC1];
 sc2 = [LC2; 0; 0];
 sc3 = [LC3; 0; 0];
 
@@ -36,22 +37,9 @@ R01 = T01(1:3,1:3);
 R12 = T12(1:3,1:3);
 R23 = T23(1:3,1:3);
 
-%% Calculate velocities taken from craig s.176
-omega0 = 0;
-omegadot0 = 0;
-Vdot0 = 0;
-
-
-% omega1 = dtheta1*R01*[0;0;1];
-% v1 = 0;
-% 
-% v2 = v1 + cross(omega1, s1);
-% omega2 = omega1 + dtheta2*R12*z;
-% vc2 = v2 + cross(omega2, sc2);
-% 
-% v3 = v2 + cross(omega2, s2);
-% omega3 = omega2 + dtheta3*R23*z;
-% vc3 = v3 + cross(omega3, sc3);
+R32 = transpose(R23);
+R21 = transpose(R12);
+R10 = transpose(R01);
 
 %% Inertia Tensor
 % 
@@ -68,10 +56,38 @@ Vdot0 = 0;
 % I3= 1.0e-03 * [0.7270    0.0001    0.0114;
 %                0.0001    0.6321    0.0045;
 %               0.0114    0.0045    0.1627];
-%% Calculate Lagrangian
+
 I1 = sym('I1', [3 3]);
 I2 = sym('I2', [3 3]);
 I3 = sym('I3', [3 3]);
+
+
+%% Calculate velocities taken from craig s.176
+omega0 = 0;
+omegadot0 = 0;
+vdot0 = 0;
+vcdot0 = 0;
+F0 = 0;
+N0= 0;
+
+%Link 1
+omega1 = 0+dtheta1*z;
+omegadot1 = 0+ cross(0,dtheta1*z)+ddtheta1*z;
+vdot1 = R10*(cross(omega0,0)+cross(omega0,cross(omega0,0))+vdot0);
+vcdot1 = cross(omega1,sc1)+cross(omega1,cross(omega1,sc1)+vdot1);
+F1 = m1*vcdot1;
+N1= I1*omegadot1+cross(omega1,I1*omega1);
+
+%Link 2 
+omega2 = R21*omega1+dtheta2*z;
+omegadot2 = R21*omegadot1+ cross(R21*omega1,dtheta2*z)+ddtheta2*z;
+%rest not done
+vdot2 = R21*(cross(omega0,0)+cross(omega0,cross(omega0,0))+vdot0);
+vcdot2 = cross(omega2,sc2)+cross(omega2,cross(omega2,sc2)+vdot2);
+F2 = m2*vcdot2;
+N2= I2*omegadot2+cross(omega2,I2*omega2);
+
+%% Calculate Lagrangian
 
 h1 = [0;0;5.65]+[L2+LC3;0;0];
 h2 = R01*s1 + R02*sc2 + [L2-LC2;0;0] + [LC3;0;0]; 
