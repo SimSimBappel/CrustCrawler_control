@@ -46,7 +46,7 @@ I2 = sym('I2', [3 3]);
 I3 = sym('I3', [3 3]);
 
 
-%% Make Rotation matrices
+%% Make Rotation matrices from DH-parameters
 a = [0;0;L2;L3];
 alpha = [0;pi/2; pi/2;0];
 d = [0;L1;0;0];
@@ -63,12 +63,13 @@ R03 = R01*R12*R23;
 R10 = transpose(R01);
 R21 = transpose(R12);
 R32 = transpose(R23);
+R30 = transpose(R03);
 
 %% Outward Iteration taken from Craig p.176
 omega0 = zeros(3,1);
 omegadot0 = zeros(3,1) ;
-vdot0 = zeros(3,1);
-vcdot0 = zeros(3,1);
+vdot0 = -g;
+vcdot0 = vdot0;
 F0 = zeros(3,1);
 N0= zeros(3,1);
 
@@ -109,15 +110,11 @@ f2 = R23*f3+F2;
 n2 = N2 + R23*cross(fObj,s2) + cross(sc2,F2) + cross(s2,R23*F2);
 tau2 = transpose(n2)*z;
 
-%Joint 2
+%Joint 1
 f1 = R12*f2+F1;
 n1 = N1 + R12*cross(fObj,s1) + cross(sc1,F1) + cross(s1,R12*F1);
 tau1 = transpose(n1)*z;
-%% Threshold values
-threshold = 1/1000.
-tau1 = mapSymType(tau1, 'vpareal', @(x) piecewise(abs(x)<=threshold, 0, x));
-tau2 = mapSymType(tau2, 'vpareal', @(x) piecewise(abs(x)<=threshold, 0, x));
-tau3 = mapSymType(tau3, 'vpareal', @(x) piecewise(abs(x)<=threshold, 0, x));
+
 %% Calculate Lagrangian
 
 h1 = [0;0;5.65]+[L2+LC3;0;0];
@@ -134,7 +131,6 @@ V3 = m3*dot(g,h3);
 
 %L = T1 - V1(1) + T2 - V2(1) + T3 - V3(1)
 
-%%
-
-
-
+%% Gravity Calculation
+g_3 = R30*g;
+tau_g = cross(g_3,sc3)
