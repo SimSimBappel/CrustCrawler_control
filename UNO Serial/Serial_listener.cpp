@@ -96,9 +96,6 @@ void loop() {
     if( aZ_show < 0 && aY_show < 0){
        pitch = -180-pitch;
     }
-    /*else if (aZ_show < 0){
-      pitch = -180-pitch; 
-      }*/
     else if( aZ_show < 0 && aY_show > 0){
       // probably nothing
       }
@@ -111,7 +108,7 @@ void loop() {
     sendpitch = int(pitch);
 
     //main delay issue, delay is 5ms without, 115 with
-    emg.GetInput(1);
+    emg.GetInput();
     int EMG1 = emg.EMG1();
     int EMG2 = emg.EMG2();
 
