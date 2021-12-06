@@ -166,9 +166,6 @@ void serialHandler(void)
     
 
     // delay tester
-    // Serial1.print("t4 delay: ");
-    // Serial1.println(t4Millis-startMillis);
-    //startMillis = t1Millis;
     //Serial1.print("t1msec: ");
     //Serial1.println(millis()-t1Millis);
     k_sleep(30);
@@ -526,11 +523,11 @@ void t4(void){
       Serial1.println(dxl.getPresentPosition(i));
     }
 
-/*
-    Serial1.print("t4msec: ");
-    Serial1.println(millis()-t4Millis);
+
+    //Serial1.print("t4msec: ");
+    //Serial1.println(millis()-t4Millis);
     k_sleep(80);
-*/
+
   }
 }
 
@@ -543,7 +540,7 @@ void setup()
   // Native serial port (switches from USB-port to dynamixel with physical switch)
   dxl.begin(115200);
   // second serial (the one that communicates with UNO)
-  Serial1.begin(9600);
+  Serial1.begin(57600);
   //--
 
   dxl.setPortProtocolVersion(DXL_PROTOCOL_VERSION);

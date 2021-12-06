@@ -46,7 +46,7 @@ void EMG::GetInput(){
   //read input and put data into array 
   for(int i = 0; i < 24; i++){
     
-    while(!Serial.available()); //Wait for data to be received
+    //while(!Serial.available()); //Wait for data to be received
     _str[i] = Serial.read(); //Save incoming byte into string array that is not string but integer.
 
     //Make sure it reads from start
