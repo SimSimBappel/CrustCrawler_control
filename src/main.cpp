@@ -171,12 +171,12 @@ void serialHandler(void)
   }
 }
 
-void current(void)
+void current(void) //maybe current should be called computed torque kernel instead?
 {
 
   uint8_t DXL_ID = 3;
   dxl.torqueOff(DXL_ID);
-  dxl.setOperatingMode(DXL_ID, OP_CURRENT); // Skal sættes til current senere hvis control system skal laves
+  dxl.setOperatingMode(DXL_ID, OP_CURRENT); 
   dxl.writeControlTableItem(PROFILE_VELOCITY, DXL_ID, 10);
   dxl.writeControlTableItem(PROFILE_ACCELERATION, DXL_ID, 5);
   dxl.torqueOn(DXL_ID);
@@ -290,14 +290,12 @@ void current(void)
    
 
     float gconst = 0.45; // 1.2956;
-    Torque_g = m3 * ((gconst * cos(theta1 * PI / 180) * sin(theta3 * PI / 180)) - (gconst * cos(theta2 * PI / 180) * sin(theta1 * PI / 180)));
-    
-    //((gconst * cos(theta1 * PI / 180) * sin(theta3 * PI / 180)) - ((gconst * cos(theta2 * PI / 180)) * cos(theta3 * PI / 180)) * sin(theta1 * PI / 180));
-    
+    Torque_g = m3 * ((gconst * cos(theta1 * PI / 180) * sin(theta3 * PI / 180)) - (gconst * cos(theta2 * PI / 180) * sin(theta1 * PI / 180))); // New idea, maybe we should use R30 instead of R03
+        
 
     torque_Nm = Jt * (kp * (theta_ref - theta3) - kv * omega);
 
-    torque = (torque_Nm + Torque_g)*875; //to milli anps the minus the beacuse we dumb and need to flip the orientation of the new motor
+    torque = (torque_Nm + Torque_g)*875; //to milli amps the minus the beacuse we dumb and need to flip the orientation of the new motor
 
 
 
