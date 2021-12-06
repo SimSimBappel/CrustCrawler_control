@@ -291,7 +291,7 @@ void current(void) //maybe current should be called computed torque kernel inste
 
     float gconst = 0.45; // 1.2956;
     Torque_g = m3 * ((gconst * cos(theta1 * PI / 180) * sin(theta3 * PI / 180)) - (gconst * cos(theta2 * PI / 180) * sin(theta1 * PI / 180))); // New idea, maybe we should use R30 instead of R03
-        
+                    //m3*(gconst*cos(theta1 * PI / 180)*cos(theta2)*sin(theta3 * PI / 180) - gconst*sin(theta1 * PI / 180)*sin(theta3 * PI / 180)*cos(theta3 * PI / 180));
 
     torque_Nm = Jt * (kp * (theta_ref - theta3) - kv * omega);
 
