@@ -14,10 +14,11 @@ DynamixelShield dxl;
 using namespace ControlTableItem;
 
 struct k_t *pserialHandler, *pcurrent, *pgripper, *pt4;
-struct k_msg_t *msgQ, *msgQ2;
+struct k_msg_t *msgQ, *msgQ2, *msgQ3;
 char dataBufForMsgQ[100];
 char dataBufForMsgQ2[100];
-struct k_t *gripSem, *posSem;
+char dataBufForMsgQ3[100];
+struct k_t *gripSem, *posSem, *curSem;
 
 // find proper stacksize, see void setup comments
 char s1[1000];
@@ -133,6 +134,7 @@ void serialHandler(void)
     if (receivedChars[0] == 'P')
     { // current input given in miliampere
       // make sure the message queue is emptied idk how
+      Serial1.println("got a P");
       k_send(msgQ2, &receivedChars);
       k_signal(posSem);
       //receivedChars[0] = ' ';
@@ -140,7 +142,9 @@ void serialHandler(void)
     }
 
     if(receivedChars[0] == 'C'){
-
+      Serial1.println("got a C");
+      k_send(msgQ3, &receivedChars);
+      k_signal(curSem);
     }
 
     if (receivedChars[0] == 'S' && motorsOn)
@@ -165,8 +169,8 @@ void serialHandler(void)
     // Serial1.print("t4 delay: ");
     // Serial1.println(t4Millis-startMillis);
     //startMillis = t1Millis;
-    Serial1.print("t1msec: ");
-    Serial1.println(millis()-t1Millis);
+    //Serial1.print("t1msec: ");
+    //Serial1.println(millis()-t1Millis);
     k_sleep(30);
   }
 }
@@ -223,9 +227,6 @@ void current(void) //maybe current should be called computed torque kernel inste
   int goalPose;
   int lostMessages;
   char msg[20];
-  char tempMsg[7];
-  int tempPos;
-  int lastKomma = 13;
   float currentKick = 275;
 
   while (1)
@@ -233,32 +234,28 @@ void current(void) //maybe current should be called computed torque kernel inste
     unsigned long t2Millis = millis();
 
     
-    // M3
-
-    for (int i = 0; i < 7; i++)
+    if(k_receive(msgQ3, &msg, -1, &lostMessages) == 0)
     {
-      tempMsg[i] = ' ';
-    }
-
-    for (int i = lastKomma; i < 14; i++)
-    {
-      if (msg[i] == ',')
+      Serial.println("ass");
+      if (msg[1] == '1')
       {
-        i = 100; // end reading of message
+        goalPose = goalPose + 5;
       }
-      else
+      else if (msg[1] == '0')
       {
-        tempMsg[i - lastKomma] = msg[i];
+        goalPose = goalPose - 5;
       }
     }
 
-    tempPos = atoi(tempMsg); // tempPos could be renamed to tempCurrent
+    theta_ref = goalPose*0.088;
+
+    //tempPos = atoi(tempMsg); // tempPos could be renamed to tempCurrent
     
-     if (tempPos == 1)
-       goalPose = goalPose + 5;
-     if (tempPos == 0)
-       goalPose = goalPose - 5;
+    //Serial1.println(theta_ref);
+      
      
+
+
     // goalPose = 1500;
 
     theta1 = (-dxl.getCurPosition(1) + 2700) * 0.088;
@@ -266,7 +263,7 @@ void current(void) //maybe current should be called computed torque kernel inste
     theta3 = (dxl.getCurPosition(3) - 1535) * 0.088;
 
     omega = dxl.getPresentVelocity(3, UNIT_RPM) * 6;
-
+/*
     if (millis() - t > 5000)
     {
       t = millis();
@@ -282,7 +279,7 @@ void current(void) //maybe current should be called computed torque kernel inste
           ref = false;
         }
     }
-   
+   */
 
     float gconst = 0.45; // 1.2956;
     Torque_g = m3 * ((gconst * cos(theta1 * PI / 180) * sin(theta3 * PI / 180)) - (gconst * cos(theta2 * PI / 180) * sin(theta1 * PI / 180))); // New idea, maybe we should use R30 instead of R03
@@ -319,8 +316,8 @@ void current(void) //maybe current should be called computed torque kernel inste
 
     
 
-    Serial1.print("t2msec: ");
-    Serial1.println(millis()-t2Millis);
+    //Serial1.print("t2msec: ");
+    //Serial1.println(millis()-t2Millis);
     k_sleep(40);
   }
 }
@@ -484,7 +481,7 @@ void t4(void){
 
 
 
-    I13_3*ddtheta1 + 0.555*sin(theta2)*mObj*(sin(theta1)*cos(theta2)*cos(theta3) - 1.*cos(theta1)*sin(theta3)) - 0.555*sin(theta2)*cos(theta2)*mObj*(cos(theta1)*cos(theta2)*cos(theta3) + 1.*sin(theta1)*sin(theta3))
+    //I13_3*ddtheta1 + 0.555*sin(theta2)*mObj*(sin(theta1)*cos(theta2)*cos(theta3) - 1.*cos(theta1)*sin(theta3)) - 0.555*sin(theta2)*cos(theta2)*mObj*(cos(theta1)*cos(theta2)*cos(theta3) + 1.*sin(theta1)*sin(theta3));
 
 
 
@@ -529,10 +526,11 @@ void t4(void){
       Serial1.println(dxl.getPresentPosition(i));
     }
 
-
+/*
     Serial1.print("t4msec: ");
     Serial1.println(millis()-t4Millis);
     k_sleep(80);
+*/
   }
 }
 
@@ -543,9 +541,9 @@ void setup()
 {
   // Serial definition--
   // Native serial port (switches from USB-port to dynamixel with physical switch)
-  dxl.begin(1000000);
+  dxl.begin(115200);
   // second serial (the one that communicates with UNO)
-  Serial1.begin(57600);
+  Serial1.begin(9600);
   //--
 
   dxl.setPortProtocolVersion(DXL_PROTOCOL_VERSION);
@@ -554,10 +552,11 @@ void setup()
   // dxl.ping(DXL_ID);
 
   // init krnl so you can create x tasks, y semaphores and z message queues
-  k_init(4, 2, 2);
+  k_init(4, 3, 3);
 
   msgQ = k_crt_send_Q(1, sizeof(char[20]), dataBufForMsgQ);
   msgQ2 = k_crt_send_Q(1, sizeof(char[20]), dataBufForMsgQ2);
+  msgQ3 = k_crt_send_Q(1, sizeof(char[20]), dataBufForMsgQ3);
 
   // each pt(n) is a pointer to a function t(n), priority, stack size
   pserialHandler = k_crt_task(serialHandler, 1, 1000);
@@ -567,6 +566,7 @@ void setup()
 
   gripSem = k_crt_sem(0, 1);
   posSem = k_crt_sem(0, 1);
+  curSem = k_crt_sem(0, 1);
 
   // stack size----
   // Arudino Mega has 8 kByte RAM
@@ -574,7 +574,7 @@ void setup()
   //  return address, registers stakked, local variables in a function
   //
   //!!! to find the unused stacksize call "k_unused_stack" !!!
-
+  Serial1.println("succ me ass");
   // start kernel with tick speed 1 milli seconds
   int res;
   res = k_start(1); // 1 milli sec tick speed
