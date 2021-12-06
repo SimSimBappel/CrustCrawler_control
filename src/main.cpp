@@ -220,14 +220,18 @@ void current(void) //maybe current should be called computed torque kernel inste
   float theta_ref = 0, theta_ref_90 = -50, theta_ref_10 = 45; // ref 90 og 10 er test
   float Jt = 0.0001627;
   float omegac = 7, zeta = 0.35, kp = omegac * omegac, kv = 2 * zeta * omegac;
-
+  int goalPose;
+  int lostMessages;
+  char msg[20];
+  char tempMsg[7];
+  int tempPos;
+  int lastKomma = 13;
   float currentKick = 275;
-  
 
   while (1)
   {
     unsigned long t2Millis = millis();
-/*
+
     
     // M3
 
@@ -254,20 +258,14 @@ void current(void) //maybe current should be called computed torque kernel inste
        goalPose = goalPose + 5;
      if (tempPos == 0)
        goalPose = goalPose - 5;
-     */
+     
     // goalPose = 1500;
-
-
-
 
     theta1 = (-dxl.getCurPosition(1) + 2700) * 0.088;
     theta2 = (dxl.getCurPosition(2) - 1038) * 0.088;
     theta3 = (dxl.getCurPosition(3) - 1535) * 0.088;
-    
+
     omega = dxl.getPresentVelocity(3, UNIT_RPM) * 6;
-    
-
-
 
     if (millis() - t > 5000)
     {
@@ -282,22 +280,15 @@ void current(void) //maybe current should be called computed torque kernel inste
         {
           theta_ref = theta_ref_90;
           ref = false;
-         
         }
-      
-       
     }
    
 
     float gconst = 0.45; // 1.2956;
     Torque_g = m3 * ((gconst * cos(theta1 * PI / 180) * sin(theta3 * PI / 180)) - (gconst * cos(theta2 * PI / 180) * sin(theta1 * PI / 180))); // New idea, maybe we should use R30 instead of R03
                     //m3*(gconst*cos(theta1 * PI / 180)*cos(theta2)*sin(theta3 * PI / 180) - gconst*sin(theta1 * PI / 180)*sin(theta3 * PI / 180)*cos(theta3 * PI / 180));
-
     torque_Nm = Jt * (kp * (theta_ref - theta3) - kv * omega);
-
     torque = (torque_Nm + Torque_g)*875; //to milli amps the minus the beacuse we dumb and need to flip the orientation of the new motor
-
-
 
     if(shouldMoveUp(omega, torque_Nm)){ //make if so that if it is approaching the gravitational vector the dampening should be larger
       torque += currentKick;
@@ -468,7 +459,7 @@ void t4(void){
     theta1 = (-dxl.getCurPosition(1) + 2700) * 0.088;
     theta2 = (dxl.getCurPosition(2) - 1038) * 0.088;
     theta3 = (dxl.getCurPosition(3) - 1535) * 0.088;
-    calculatedd(1);
+    //calculatedd(1);
 
     for (int i = 0; i < 7; i++)
     {
