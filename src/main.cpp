@@ -144,7 +144,7 @@ void serialHandler(void)
     if(receivedChars[0] == 'C'){
       Serial1.println("got a C");
       k_send(msgQ3, &receivedChars);
-      k_signal(curSem);
+      //k_signal(curSem);
     }
 
     if (receivedChars[0] == 'S' && motorsOn)
@@ -231,7 +231,7 @@ void current(void) //maybe current should be called computed torque kernel inste
     unsigned long t2Millis = millis();
 
     
-    if(k_receive(msgQ3, &msg, -1, &lostMessages) == 0)
+    if(k_receive(msgQ3, &msg, -1, &lostMessages) == 1)
     {
       Serial.println("ass");
       if (msg[1] == '1')
@@ -245,6 +245,8 @@ void current(void) //maybe current should be called computed torque kernel inste
     }
 
     theta_ref = goalPose*0.088;
+
+    Serial1.println(theta_ref);
 
     //tempPos = atoi(tempMsg); // tempPos could be renamed to tempCurrent
     

@@ -43,17 +43,15 @@ EMG::EMG(){
 
 //Get input from EMG module
 void EMG::GetInput(){ 
-  //read input and put data into array 
   for(int i = 0; i < 24; i++){
-    
-    //while(!Serial.available()); //Wait for data to be received
-    _str[i] = Serial.read(); //Save incoming byte into string array that is not string but integer.
-
-    //Make sure it reads from start
-    if(i == 2){
-      if(_str[0] != 0X7E || _str[1] != 0X00 || _str[2] != 0X14){ //make sure that data is proper arranged
+    while(!Serial.available());
+    _str[i] = Serial.read();
+    if(_str[i] == 0X7E){
+      i = 0;
+    }
+    //delay(1); Experimental delay.
+    if(i == 23 && _str[0] != 0X7E){
       i = -1;
-      }
     }
   }
 }

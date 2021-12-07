@@ -123,17 +123,17 @@ void loop() {
     //main delay issue, delay is 5ms without, 115 with
     
     //emg.reset();
-    Serial.println("lol");
+    
     emg.GetInput();
     int EMG1 = emg.EMG1();
     int EMG2 = emg.EMG2();
 
-    
+    /*
     Serial.print("EMG Signals: ");
     Serial.print(EMG1);
     Serial.print("    ");
     Serial.println(EMG2);
-    
+    */
     
     currentMillis = millis();
     if( EMG1 > BaseEMG1 + 2*EMGdev && EMG2 > BaseEMG2 + EMGdev){ //Opens the gripper 
@@ -166,17 +166,22 @@ void loop() {
    
 
 
-    
+    mySerial.print("<C");
     mySerial.print(String(Direction));
     mySerial.print(">\n");
+
+    Serial.print("<C");
+    Serial.print(String(Direction));
+    MSerial.print(">\n");
     
     
     
+    /*
     Serial.print("baseline: ");
     Serial.print(BaseEMG1);
     Serial.print(" , ");
     Serial.println(BaseEMG2);
-    
+    */
 
   while (mySerial.available()) {
     Serial.write(mySerial.read());
@@ -184,7 +189,7 @@ void loop() {
   if (Serial.available()) {
     mySerial.write(Serial.read());
   }
-  Serial.println("end");
+  
   delay(100); //might be able to delete it
 }
 
