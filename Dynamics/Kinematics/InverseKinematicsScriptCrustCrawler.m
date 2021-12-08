@@ -1,8 +1,8 @@
 %%Forward Kinematics
 %syms theta1 theta2 theta3;
-theta1 = 200 
-theta2 = 220
-theta3 = 240
+theta1 = 100 
+theta2 = 110
+theta3 = 120
 
 theta1 = pi/180 * theta1; 
 theta2 = pi/180 * theta2;
@@ -61,14 +61,21 @@ theta3_f = pi - acos(((L2^2 + L3^2) - r^2)/(2*L2*L3));
 theta3_f2 = -pi + acos(((L2^2 + L3^2) - r^2)/(2*L2*L3));
 
 theta2_f  = asin((Pose(3)-L1)/(111/500 + (251*cos(theta3_f))/1000));
+
 if theta3_f > pi/2
 % sometimes theta2_f has to be 
     theta2_f  = pi - theta2_f;
 end
-theta3_f = 
-theta1_f = acos(1000*(251*cos(theta2_f)*cos(theta3_f)*Pose(1) + 222*cos(theta2_f)*Pose(1) + 251*sin(theta3_f)*Pose(2))/(63001*cos(theta2_f)^2*cos(theta3_f)^2 + 111444*cos(theta2_f)^2*cos(theta3_f) + 49284*cos(theta2_f)^2 + 63001*sin(theta3_f)^2));
+
+theta1_f = acos(1000*(251*cos(theta2_f)*cos(theta3_f)*Pose(1) + 222*cos(theta2_f)*Pose(1) + 251*sin(theta3_f)*Pose(2))/(63001*cos(theta2_f)^2*cos(theta3_f2)^2 + 111444*cos(theta2_f)^2*cos(theta3_f2) + 49284*cos(theta2_f)^2 + 63001*sin(theta3_f)^2));
+
+% if theta3_f > pi/2 |  2*pi+theta3_f2 > 4*pi/3
+% theta1_f = 2*pi-acos(1000*(251*cos(theta2_f)*cos(theta3_f2)*Pose(1) + 222*cos(theta2_f)*Pose(1) + 251*sin(theta3_f2)*Pose(2))/(63001*cos(theta2_f)^2*cos(theta3_f2)^2 + 111444*cos(theta2_f)^2*cos(theta3_f2) + 49284*cos(theta2_f)^2 + 63001*sin(theta3_f2)^2));
+% theta3_f = theta3_f2;
+% end
+
 
 theta1 = theta1_f*(180/pi)
+theta1_2 = theta1_f2*(180/pi);
 theta2 = theta2_f*(180/pi)
 theta3 = theta3_f*(180/pi)
-theta3_2 = theta3_f2*(180/pi)
