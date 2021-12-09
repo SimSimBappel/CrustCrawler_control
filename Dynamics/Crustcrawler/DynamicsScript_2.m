@@ -117,21 +117,21 @@ n1 = N1 + R12*cross(fObj,s1) + cross(sc1,F1) + cross(s1,R12*F1);
 tau1 = transpose(n1)*z;
 
 %% Calculate Lagrangian
-
-h1 = [0;0;5.65]+[L2+LC3;0;0];
-h2 = R01*s1 + R02*sc2 + [L2-LC2;0;0] + [LC3;0;0]; 
-h3 = R01*s1 + R02*sc2 + R03*sc3;
-T1 = 1/2*dot(omega1, I1*omega1);
-V1 = m1*dot(g,h1);
-
-T2 = 1/2*m2*dot(vc2, vc2) + 1/2*dot(omega2,I2*omega2);
-
-V2 = m2*dot(g,h2);
-T3 = 1/2*m3*dot(vc3, vc3) + 1/2*dot(omega3, I3*omega3);
-V3 = m3*dot(g,h3);
-
-%L = T1 - V1(1) + T2 - V2(1) + T3 - V3(1)
-
-%% Gravity Calculation
-g_3 = R30*g;
-tau_g = cross(g_3,sc3)
+% 
+% h1 = [0;0;5.65]+[L2+LC3;0;0];
+% h2 = R01*s1 + R02*sc2 + [L2-LC2;0;0] + [LC3;0;0]; 
+% h3 = R01*s1 + R02*sc2 + R03*sc3;
+% T1 = 1/2*dot(omega1, I1*omega1);
+% V1 = m1*dot(g,h1);
+% 
+% T2 = 1/2*m2*dot(vc2, vc2) + 1/2*dot(omega2,I2*omega2);
+% 
+% V2 = m2*dot(g,h2);
+% T3 = 1/2*m3*dot(vc3, vc3) + 1/2*dot(omega3, I3*omega3);
+% V3 = m3*dot(g,h3);
+% 
+% %L = T1 - V1(1) + T2 - V2(1) + T3 - V3(1)
+% 
+% %% Gravity Calculation
+% g_3 = R30*g;
+% tau_g = cross(g_3,sc3)
