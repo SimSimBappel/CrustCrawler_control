@@ -115,7 +115,6 @@ tau2 = transpose(n2)*z;
 f1 = R12*f2+F1;
 n1 = N1 + R12*cross(fObj,s1) + cross(sc1,F1) + cross(s1,R12*F1);
 tau1 = transpose(n1)*z;
-
 %% Calculate Lagrangian
 % 
 % h1 = [0;0;5.65]+[L2+LC3;0;0];
