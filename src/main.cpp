@@ -257,11 +257,11 @@ void current(void) //maybe current should be called computed torque kernel inste
 
     // goalPose = 1500;
 
-    theta1 = (-dxl.getCurPosition(1) + 2700) * 0.088;
+    theta1 = (-dxl.getCurPosition(1) + 2700) * 0.088; // converts posistions to degrees and puts 0 downwards
     theta2 = (dxl.getCurPosition(2) - 1038) * 0.088;
     theta3 = (dxl.getCurPosition(3) - 1535) * 0.088;
 
-    omega = dxl.getPresentVelocity(3, UNIT_RPM) * 6;
+    omega = dxl.getPresentVelocity(3, UNIT_RPM) * 6; // gets speed and convert it to angles a second.
 /*
     if (millis() - t > 5000)
     {
