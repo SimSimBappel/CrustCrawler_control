@@ -117,8 +117,8 @@ void serialHandler(void)
 
     if (newData)
     {
-      // Serial1.print("This just in ... ");
-      // Serial1.print(receivedChars);
+      Serial1.print("recieved: ");
+      Serial1.println(receivedChars);
       newData = false;
 
 
@@ -144,7 +144,7 @@ void serialHandler(void)
     if(receivedChars[0] == 'C'){
       //Serial1.println("got a C");
       k_send(msgQ3, &receivedChars);
-      //k_signal(curSem);
+      k_signal(curSem);
     }
 
     if (receivedChars[0] == 'S' && motorsOn)
@@ -513,7 +513,6 @@ void t4(void){
     tempPos = 1170 - atoi(tempMsg);
     dxl.setGoalPosition(2, tempPos);
 
-
     for(int i = 1; i <= 5 && serialDebug; i++){
       Serial1.print(" M");
       Serial1.print(i);
@@ -566,6 +565,7 @@ void setup()
   gripSem = k_crt_sem(0, 1);
   posSem = k_crt_sem(0, 1);
   curSem = k_crt_sem(0, 1);
+  
 
   // stack size----
   // Arudino Mega has 8 kByte RAM
@@ -573,7 +573,6 @@ void setup()
   //  return address, registers stakked, local variables in a function
   //
   //!!! to find the unused stacksize call "k_unused_stack" !!!
-  Serial1.println("succ me ass");
   // start kernel with tick speed 1 milli seconds
   int res;
   res = k_start(1); // 1 milli sec tick speed

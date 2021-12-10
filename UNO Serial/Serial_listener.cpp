@@ -117,6 +117,12 @@ void loop() {
       mySerial.print(",");
       mySerial.print(String(sendpitch));
       mySerial.print(",>");
+
+      Serial.print("<P");
+      Serial.print(String(sendroll));
+      Serial.print(",");
+      Serial.print(String(sendpitch));
+      Serial.println(",>");
     }
 
     
@@ -165,16 +171,11 @@ void loop() {
 
    
 
-
+/*
     mySerial.print("<C");
     mySerial.print(String(Direction));
     mySerial.print(">\n");
-
-    Serial.print("<C");
-    Serial.print(String(Direction));
-    MSerial.print(">\n");
-    
-    
+    */
     
     /*
     Serial.print("baseline: ");
