@@ -134,7 +134,7 @@ void serialHandler(void)
     if (receivedChars[0] == 'P')
     { // current input given in miliampere
       // make sure the message queue is emptied idk how
-      Serial1.println("got a P");
+      //Serial1.println("got a P");
       k_send(msgQ2, &receivedChars);
       k_signal(posSem);
       //receivedChars[0] = ' ';
@@ -142,7 +142,7 @@ void serialHandler(void)
     }
 
     if(receivedChars[0] == 'C'){
-      Serial1.println("got a C");
+      //Serial1.println("got a C");
       k_send(msgQ3, &receivedChars);
       //k_signal(curSem);
     }
@@ -246,7 +246,7 @@ void current(void) //maybe current should be called computed torque kernel inste
 
     theta_ref = goalPose*0.088;
 
-    Serial1.println(theta_ref);
+    //Serial1.println(theta_ref);
 
     //tempPos = atoi(tempMsg); // tempPos could be renamed to tempCurrent
     
@@ -414,14 +414,14 @@ void t4(void){
 
   uint8_t DXL_ID = 1;
   dxl.torqueOff(DXL_ID);
-  dxl.setOperatingMode(DXL_ID, OP_CURRENT);
+  dxl.setOperatingMode(DXL_ID, OP_POSITION);
   dxl.writeControlTableItem(PROFILE_VELOCITY, DXL_ID, 200);
   dxl.writeControlTableItem(PROFILE_ACCELERATION, DXL_ID, 20);
   dxl.torqueOn(DXL_ID);
 
   DXL_ID = 2;
   dxl.torqueOff(DXL_ID);
-  dxl.setOperatingMode(DXL_ID, OP_CURRENT);
+  dxl.setOperatingMode(DXL_ID, OP_POSITION);
   dxl.writeControlTableItem(PROFILE_VELOCITY, DXL_ID, 200);
   dxl.writeControlTableItem(PROFILE_ACCELERATION, DXL_ID, 20);
   dxl.torqueOn(DXL_ID);
@@ -448,7 +448,7 @@ void t4(void){
   {
     k_wait(posSem, 0);
 
-    unsigned long t4Millis = millis();
+    //unsigned long t4Millis = millis();
 
     k_receive(msgQ2, &msg, 10, &lostMessages);
 
@@ -482,7 +482,7 @@ void t4(void){
 
     //I13_3*ddtheta1 + 0.555*sin(theta2)*mObj*(sin(theta1)*cos(theta2)*cos(theta3) - 1.*cos(theta1)*sin(theta3)) - 0.555*sin(theta2)*cos(theta2)*mObj*(cos(theta1)*cos(theta2)*cos(theta3) + 1.*sin(theta1)*sin(theta3));
 
-
+  
 
     dxl.setGoalPosition(1, tempPos);
     
