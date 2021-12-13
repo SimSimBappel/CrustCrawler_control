@@ -109,18 +109,20 @@ void loop() {
   
       sendroll = int(roll);
       sendpitch = int(pitch);
-
+/*
       Serial.print("aX:");
       Serial.print(aX);
       Serial.print(",");
       Serial.print("aX_show:");
       Serial.println(aX_show);
-          
+      
+          */
       mySerial.print("<P");
       mySerial.print(String(sendroll));
       mySerial.print(",");
       mySerial.print(String(sendpitch));
       mySerial.print(",>");
+      
 /*
       Serial.print("<P");
       Serial.print(String(sendroll));
@@ -149,12 +151,13 @@ void loop() {
     Serial.print(EMG1);
     Serial.print("    ");
     Serial.println(EMG2);
-    */
+   */
     
     currentMillis = millis();
     if( EMG1 > BaseEMG1 + 2*EMGdev && EMG2 > BaseEMG2 + EMGdev){ //Opens the gripper 
       if(gripperOpen == false && currentMillis - startMillis >= period){
       mySerial.print("<GO>");
+      Serial.print("GO");
       gripperOpen = true;
       startMillis = currentMillis;
       }
@@ -162,6 +165,7 @@ void loop() {
       mySerial.print("<GC>");
       gripperOpen = false;
       startMillis = currentMillis;
+      Serial.println("GC");
       } 
      }
 
@@ -185,8 +189,8 @@ void loop() {
     mySerial.print("<C");
     mySerial.print(String(Direction));
     mySerial.print(">\n");
-/*
-    Serial.print("<C");
+
+    /*Serial.print("<C");
     Serial.print(String(Direction));
     Serial.print(">\n");
     */
