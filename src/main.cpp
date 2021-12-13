@@ -117,8 +117,8 @@ void serialHandler(void)
 
     if (newData)
     {
-      Serial1.print("recieved: ");
-      Serial1.println(receivedChars);
+      //Serial1.print("recieved: ");
+      //Serial1.println(receivedChars);
       newData = false;
 
 
@@ -150,14 +150,14 @@ void serialHandler(void)
     if (receivedChars[0] == 'S' && motorsOn)
     {
       turnTorqueOn(false);
-      Serial1.println("Dynamixel STOP");
+      //Serial1.println("Dynamixel STOP");
       motorsOn = false;
       //receivedChars[0] = ' ';
     }
     else if (receivedChars[0] == 'S' && !motorsOn)
     {
       turnTorqueOn(true);
-      Serial1.println("Dynamixel Start");
+      //Serial1.println("Dynamixel Start");
       motorsOn = true;
       //receivedChars[0] = ' ';
     }
