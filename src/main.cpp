@@ -117,8 +117,8 @@ void serialHandler(void)
 
     if (newData)
     {
-      Serial1.print("recieved: ");
-      Serial1.println(receivedChars);
+      //Serial1.print("recieved: ");
+      //Serial1.println(receivedChars);
       newData = false;
 
 
@@ -150,14 +150,14 @@ void serialHandler(void)
     if (receivedChars[0] == 'S' && motorsOn)
     {
       turnTorqueOn(false);
-      Serial1.println("Dynamixel STOP");
+      //Serial1.println("Dynamixel STOP");
       motorsOn = false;
       //receivedChars[0] = ' ';
     }
     else if (receivedChars[0] == 'S' && !motorsOn)
     {
       turnTorqueOn(true);
-      Serial1.println("Dynamixel Start");
+      //Serial1.println("Dynamixel Start");
       motorsOn = true;
       //receivedChars[0] = ' ';
     }
@@ -182,15 +182,7 @@ void current(void) //maybe current should be called computed torque kernel inste
   dxl.writeControlTableItem(PROFILE_ACCELERATION, DXL_ID, 5);
   dxl.torqueOn(DXL_ID);
 
-  DXL_ID = 4;
-  dxl.torqueOff(DXL_ID);
-  dxl.setOperatingMode(DXL_ID, OP_PWM);
-  dxl.torqueOn(DXL_ID);
 
-  DXL_ID = 5;
-  dxl.torqueOff(DXL_ID);
-  dxl.setOperatingMode(DXL_ID, OP_PWM);
-  dxl.torqueOn(DXL_ID);
 /*
   char res;
   int lostMessages;
@@ -218,7 +210,7 @@ void current(void) //maybe current should be called computed torque kernel inste
   int torque = 10;
   double omega;
   float torque_Nm = 0.07;
-  float theta_ref = 0, theta_ref_90 = -50, theta_ref_10 = 45; // ref 90 og 10 er test
+  float theta_ref = 0, theta_ref_90 = 90, theta_ref_10 = -90; // ref 90 og 10 er test
   float Jt = 0.0001627;
   float omegac = 7, zeta = 0.35, kp = omegac * omegac, kv = 2 * zeta * omegac;
   int goalPose;
@@ -231,20 +223,25 @@ void current(void) //maybe current should be called computed torque kernel inste
     unsigned long t2Millis = millis();
 
     
-    if(k_receive(msgQ3, &msg, -1, &lostMessages) == 1)
+    if(k_receive(msgQ3, &msg, -1, &lostMessages) == 1 || k_receive(msgQ3, &msg, -1, &lostMessages) == 0)
     {
       Serial.println("ass");
       if (msg[1] == '1')
       {
-        goalPose = goalPose + 5;
+        goalPose = goalPose + 15;
+        Serial1.println("plus");
       }
       else if (msg[1] == '0')
       {
-        goalPose = goalPose - 5;
+        goalPose = goalPose - 15;
+        Serial1.println("minus");
       }
+      theta_ref = goalPose*0.088;
+       
     }
+    
 
-    theta_ref = goalPose*0.088;
+    
 
     //Serial1.println(theta_ref);
 
@@ -257,9 +254,9 @@ void current(void) //maybe current should be called computed torque kernel inste
 
     // goalPose = 1500;
 
-    theta1 = (-dxl.getCurPosition(1) + 2700) * 0.088; // converts posistions to degrees and puts 0 downwards
-    theta2 = (dxl.getCurPosition(2) - 1038) * 0.088;
-    theta3 = (dxl.getCurPosition(3) - 1535) * 0.088;
+    theta1 = (-dxl.getPresentPosition(1) + 2700) * 0.088; // converts posistions to degrees and puts 0 downwards
+    theta2 = (dxl.getPresentPosition(2) - 1038) * 0.088;
+    theta3 = (dxl.getPresentPosition(3) - 1535) * 0.088;
 
     omega = dxl.getPresentVelocity(3, UNIT_RPM) * 6; // gets speed and convert it to angles a second.
 /*
@@ -278,11 +275,11 @@ void current(void) //maybe current should be called computed torque kernel inste
           ref = false;
         }
     }
-   */
+ */  
 
-    float gconst = 0.45; // 1.2956;
-    Torque_g = m3 * ((gconst * cos(theta1 * PI / 180) * sin(theta3 * PI / 180)) - (gconst * cos(theta2 * PI / 180) * sin(theta1 * PI / 180))); // New idea, maybe we should use R30 instead of R03
-                    //m3*(gconst*cos(theta1 * PI / 180)*cos(theta2)*sin(theta3 * PI / 180) - gconst*sin(theta1 * PI / 180)*sin(theta3 * PI / 180)*cos(theta3 * PI / 180));
+    float gconst = 0.50; // 1.2956;
+   Torque_g = m3 * ((gconst * cos(theta1 * PI / 180) * sin(theta3 * PI / 180)) - (gconst * cos(theta2 * PI / 180) * sin(theta1 * PI / 180))); // New idea, maybe we should use R30 instead of R03
+                    //Torque_g = m3*(gconst*cos(theta1 * PI / 180)*cos(theta2)*sin(theta3 * PI / 180) - gconst*sin(theta1 * PI / 180)*sin(theta3 * PI / 180)*cos(theta3 * PI / 180));
     torque_Nm = Jt * (kp * (theta_ref - theta3) - kv * omega);
     torque = (torque_Nm + Torque_g)*875; //to milli amps the minus the beacuse we dumb and need to flip the orientation of the new motor
 
@@ -293,6 +290,8 @@ void current(void) //maybe current should be called computed torque kernel inste
       torque -= currentKick; 
     }
     
+
+
     
     dxl.setGoalCurrent(3, torque, UNIT_MILLI_AMPERE);
     //dxl.setGoalPWM(3, torque);
@@ -303,21 +302,23 @@ void current(void) //maybe current should be called computed torque kernel inste
     Serial1.print(theta3);
     Serial1.print(",A_ref:");
     Serial1.print(theta_ref);
+    
     Serial1.print(",Torque_Nm:");
-    Serial1.print(torque_Nm);
+    Serial1.print(torque_Nm*875);
     Serial1.print(",Torque_g:");
-    Serial1.print(Torque_g);
+    Serial1.print(Torque_g*875);
     Serial1.print("Torque:");
     Serial1.println(torque);
 */
     //__asm__ volatile ("sei");
-
+  
+  
 
     
 
     //Serial1.print("t2msec: ");
     //Serial1.println(millis()-t2Millis);
-    k_sleep(40);
+    k_sleep(50);
   }
 }
 
@@ -330,46 +331,72 @@ void gripper(void)
   int m5Pos;
   bool moving = false;
 
+  int loadConst = 250;
+
+  uint8_t  DXL_ID = 4;
+  dxl.torqueOff(DXL_ID);
+  dxl.setOperatingMode(DXL_ID, OP_PWM);
+  dxl.torqueOn(DXL_ID);
+
+  DXL_ID = 5;
+  dxl.torqueOff(DXL_ID);
+  dxl.setOperatingMode(DXL_ID, OP_PWM);
+  dxl.torqueOn(DXL_ID);
+
   while (1)
   {
-    /*
+  
     unsigned long t3Millis = millis();
-    
+
+  
     if(!moving)
     {
       k_wait(gripSem, 0);
+      moving = true;
+      
+      
+
+      if(k_receive(msgQ, &msg, 10, &lostMessages)==1 || k_receive(msgQ, &msg, 10, &lostMessages)==0)
+      {
+        if (msg[1] == 'O')
+        {
+          dxl.torqueOff(4);
+          dxl.setOperatingMode(4, OP_POSITION);
+          dxl.torqueOn(4);
+          dxl.torqueOff(5);
+          dxl.setOperatingMode(5, OP_POSITION);
+          dxl.torqueOn(5);
+          dxl.setGoalPosition(4, 2448);
+          dxl.setGoalPosition(5, 1760);
+          moving = false;
+        }
+        else if (msg[1] == 'C')
+        { 
+          dxl.torqueOff(4);
+          dxl.setOperatingMode(4, OP_PWM);
+          dxl.torqueOn(4);
+
+          dxl.torqueOff(5);
+          dxl.setOperatingMode(5, OP_PWM);
+          dxl.torqueOn(5);
+          dxl.setGoalPWM(4, -POS, UNIT_RAW);
+          dxl.setGoalPWM(5, POS, UNIT_RAW);
+        }
+        else
+        {
+          Serial1.println("msg2[1] is not == to c || o");
+        }
+      }
     }
     
 
-    dxl.torqueOff(4);
-    dxl.setOperatingMode(4, OP_PWM);
-    dxl.torqueOn(4);
 
-    dxl.torqueOff(5);
-    dxl.setOperatingMode(5, OP_PWM);
-    dxl.torqueOn(5);
+    
 
-    k_receive(msgQ, &msg, 10, &lostMessages);
-
-    if (msg[1] == 'O')
-    {
-      moving = true;
-      dxl.setGoalPWM(4, POS, UNIT_RAW);
-      dxl.setGoalPWM(5, -POS, UNIT_RAW);
-    }
-    else if (msg[1] == 'C')
-    { 
-      moving = true;
-      dxl.setGoalPWM(4, -POS, UNIT_RAW);
-      dxl.setGoalPWM(5, POS, UNIT_RAW);
-    }
-    else
-    {
-      Serial1.println("msg2[1] is not == to c || o");
-    }
+    
 
     // gripper fixed code 2
-    if (dxl.readControlTableItem(PRESENT_LOAD, 4) < -300 && dxl.readControlTableItem(PRESENT_LOAD, 5) > 300 && moving)
+    if (dxl.readControlTableItem(PRESENT_LOAD, 4) < -loadConst && dxl.readControlTableItem(PRESENT_LOAD, 5) > loadConst && moving)
     {
       moving = false;
       m4Pos = dxl.getPresentPosition(4);
@@ -387,7 +414,7 @@ void gripper(void)
 
     //__asm__ volatile ("cli");
     
-
+/*
       for(int i = 1; i <= 5; i++)
       {
         if(dxl.readControlTableItem(PRESENT_TEMPERATURE, i))
@@ -401,12 +428,21 @@ void gripper(void)
           Serial1.println("is not connected");
         }
       }
-    //__asm__ volatile ("sei");
+      */
+    
+
+    
     Serial1.print("t3msec: ");
     Serial1.println(millis()-t3Millis);
     
-    */
-    k_sleep(100);
+    if(!moving){
+      k_sleep(200);
+    }
+    else{
+      k_sleep(50);
+    }
+    
+    
   }
 }
 
@@ -421,7 +457,7 @@ void t4(void){
 
   DXL_ID = 2;
   dxl.torqueOff(DXL_ID);
-  dxl.setOperatingMode(DXL_ID, OP_POSITION);
+  dxl.setOperatingMode(DXL_ID, OP_CURRENT);
   dxl.writeControlTableItem(PROFILE_VELOCITY, DXL_ID, 200);
   dxl.writeControlTableItem(PROFILE_ACCELERATION, DXL_ID, 20);
   dxl.torqueOn(DXL_ID);
@@ -449,11 +485,10 @@ void t4(void){
     k_wait(posSem, 0);
 
     //unsigned long t4Millis = millis();
-
     k_receive(msgQ2, &msg, 10, &lostMessages);
 
     theta1 = (-dxl.getCurPosition(1) + 2700) * 0.088;
-    theta2 = (dxl.getCurPosition(2) - 1038) * 0.088;
+    theta2 = (dxl.getCurPosition(2) - 1020) * 0.088;
     theta3 = (dxl.getCurPosition(3) - 1535) * 0.088;
     //calculatedd(1);
 
@@ -478,14 +513,11 @@ void t4(void){
 
 
 
-
-
     //I13_3*ddtheta1 + 0.555*sin(theta2)*mObj*(sin(theta1)*cos(theta2)*cos(theta3) - 1.*cos(theta1)*sin(theta3)) - 0.555*sin(theta2)*cos(theta2)*mObj*(cos(theta1)*cos(theta2)*cos(theta3) + 1.*sin(theta1)*sin(theta3));
 
   
 
     dxl.setGoalPosition(1, tempPos);
-    
 
 
 
@@ -512,6 +544,7 @@ void t4(void){
     }
     tempPos = 1170 - atoi(tempMsg);
     dxl.setGoalPosition(2, tempPos);
+    
 
     for(int i = 1; i <= 5 && serialDebug; i++){
       Serial1.print(" M");
@@ -557,8 +590,8 @@ void setup()
   msgQ3 = k_crt_send_Q(1, sizeof(char[20]), dataBufForMsgQ3);
 
   // each pt(n) is a pointer to a function t(n), priority, stack size
-  pserialHandler = k_crt_task(serialHandler, 1, 1000);
-  pcurrent = k_crt_task(current, 2, 1000);
+  pserialHandler = k_crt_task(serialHandler, 2, 1000);
+  pcurrent = k_crt_task(current, 1, 1000);
   pgripper = k_crt_task(gripper, 4, 1000);
   pt4 = k_crt_task(t4, 3, 1000);
 
