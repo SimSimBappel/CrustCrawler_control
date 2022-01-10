@@ -1,7 +1,0 @@
-2021-Dec-12 14:44:21
-Computer name:	FAGGOT
-Number of cores used in calculation:	16
-Configuration name:	Default
-Project name:	Torque
-
-Warnings on last iteration: 
