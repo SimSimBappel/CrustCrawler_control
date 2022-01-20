@@ -8,8 +8,8 @@ end
 end 
 
 function Ti = iTrans(a,alpha, d, thetaOff, theta)
-    Ti = [ cos(thetaOff+theta) -sin(thetaOff+theta)                           0              a;
-        sin(thetaOff+theta)*cos(alpha) cos(thetaOff+theta)*cos(alpha)          -sin(alpha) -sin(alpha)*d;
-        sin(thetaOff+theta)*sin(alpha) cos(thetaOff+theta)*sin(thetaOff+theta) cos(alpha)   cos(alpha)*d;
-        0 0 0 1 ];
+    Ti = [ cos(thetaOff+theta)            -sin(thetaOff+theta)                    0                       a;
+           sin(thetaOff+theta)*cos(alpha) cos(thetaOff+theta)*cos(alpha)          -sin(alpha) -sin(alpha)*d;
+           sin(thetaOff+theta)*sin(alpha) cos(thetaOff+theta)*sin(alpha)          cos(alpha)   cos(alpha)*d;
+           0                              0                                       0                      1];
 end
