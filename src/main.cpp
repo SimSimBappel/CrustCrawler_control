@@ -290,9 +290,6 @@ void current(void) //maybe current should be called computed torque kernel inste
       torque -= currentKick; 
     }
     
-
-
-    
     dxl.setGoalCurrent(3, torque, UNIT_MILLI_AMPERE);
     //dxl.setGoalPWM(3, torque);
     
